@@ -1,27 +1,33 @@
-include ~/rodinia_3.0/common/make.config
+include ../../common/make.config
 
-CC := $(CUDA_DIR)/bin/nvcc
-
-INCLUDE := $(CUDA_DIR)/include
+# CC := $(CUDA_DIR)/bin/nvcc
+# INCLUDE := $(CUDA_DIR)/include
 
 SRC = 3D.cu
-
-EXE = 3D 
+OBJ = 3D.o
+EXE = 3D
 
 OUTPUT = *.out
 
-FLAGS = -g -G #-arch sm_20 --ptxas-options=-v
-release: $(SRC)
-	$(CC) $(KERNEL_DIM) $(FLAGS) $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+# FLAGS = -g -G #-arch sm_20 --ptxas-options=-v
 
-enum: $(SRC)
-	$(CC) $(KERNEL_DIM) $(FLAGS) -deviceemu $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+$(EXE): $(OBJ)
+	$(LINKER) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) $(OBJ) -o $(EXE)
 
-debug: $(SRC)
-	$(CC) $(KERNEL_DIM) $(FLAGS) -g $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+$(OBJ): $(SRC)
+	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ -I../util
 
-debugenum: $(SRC)
-	$(CC) $(KERNEL_DIM) $(FLAGS) -g -deviceemu $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+# release: $(SRC)
+# 	$(CC) $(KERNEL_DIM) $(FLAGS) $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+
+# enum: $(SRC)
+# 	$(CC) $(KERNEL_DIM) $(FLAGS) -deviceemu $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+
+# debug: $(SRC)
+# 	$(CC) $(KERNEL_DIM) $(FLAGS) -g $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+
+# debugenum: $(SRC)
+# 	$(CC) $(KERNEL_DIM) $(FLAGS) -g -deviceemu $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
 
 clean: $(SRC)
-	rm -f $(EXE) $(EXE).linkinfo $(OUTPUT) 
+	rm -f $(EXE) $(EXE).linkinfo $(OUTPUT) *.o

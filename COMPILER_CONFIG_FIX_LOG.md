@@ -225,3 +225,55 @@ $(OBJ): $(SRC)
 clean: $(SRC)
 	rm -f $(EXE) $(EXE).linkinfo result.txt *.o
 ```
+
+
+## 1.7. HOTSPOT3D [cuda/hotspot3D/Makefile](cuda/hotspot3D/Makefile) fix
+
+- By default this is not added. So we have to add it to [Makefile](Makefile)
+
+```Makefile
+# Add "hotspot3D" in the following dir list
+CUDA_DIRS := backprop bfs cfd gaussian heartwall hotspot hotspot3D kmeans lavaMD leukocyte lud nn	nw srad streamcluster particlefilter pathfinder mummergpu
+
+# Add under "CUDA:" target
+CUDA: cuda_create_bin_dir
+	@cd cuda/hotspot3D;			make;	cp 3D $(CUDA_BIN_DIR)
+```
+
+- Then update [cuda/hotspot3D/Makefile](cuda/hotspot3D/Makefile)
+
+```Makefile
+include ../../common/make.config
+
+# CC := $(CUDA_DIR)/bin/nvcc
+# INCLUDE := $(CUDA_DIR)/include
+
+SRC = 3D.cu
+OBJ = 3D.o
+EXE = 3D
+
+OUTPUT = *.out
+
+# FLAGS = -g -G #-arch sm_20 --ptxas-options=-v
+
+$(EXE): $(OBJ)
+	$(LINKER) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) $(OBJ) -o $(EXE)
+
+$(OBJ): $(SRC)
+	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ -I../util
+
+# release: $(SRC)
+# 	$(CC) $(KERNEL_DIM) $(FLAGS) $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+
+# enum: $(SRC)
+# 	$(CC) $(KERNEL_DIM) $(FLAGS) -deviceemu $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+
+# debug: $(SRC)
+# 	$(CC) $(KERNEL_DIM) $(FLAGS) -g $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+
+# debugenum: $(SRC)
+# 	$(CC) $(KERNEL_DIM) $(FLAGS) -g -deviceemu $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+
+clean: $(SRC)
+	rm -f $(EXE) $(EXE).linkinfo $(OUTPUT) *.o
+```

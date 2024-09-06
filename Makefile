@@ -6,7 +6,7 @@ CUDA_BIN_DIR := $(RODINIA_BASE_DIR)/bin/linux/cuda
 OMP_BIN_DIR := $(RODINIA_BASE_DIR)/bin/linux/omp
 OPENCL_BIN_DIR := $(RODINIA_BASE_DIR)/bin/linux/opencl
 
-CUDA_DIRS := backprop bfs cfd gaussian heartwall hotspot kmeans lavaMD leukocyte lud nn	nw srad streamcluster particlefilter pathfinder mummergpu
+CUDA_DIRS := backprop bfs cfd gaussian heartwall hotspot hotspot3D kmeans lavaMD leukocyte lud nn	nw srad streamcluster particlefilter pathfinder mummergpu
 OMP_DIRS  := backprop bfs cfd		   heartwall hotspot kmeans lavaMD leukocyte lud nn nw srad streamcluster particlefilter pathfinder mummergpu
 OCL_DIRS  := backprop bfs cfd gaussian heartwall hotspot kmeans lavaMD leukocyte lud nn	nw srad streamcluster particlefilter pathfinder
 
@@ -30,6 +30,7 @@ CUDA: cuda_create_bin_dir
 	@cd cuda/gaussian;			make;	cp gaussian $(CUDA_BIN_DIR)
 	# @cd cuda/heartwall;		make;	cp heartwall $(CUDA_BIN_DIR)
 	@cd cuda/hotspot;			make;	cp hotspot $(CUDA_BIN_DIR)
+	@cd cuda/hotspot3D;			make;	cp 3D $(CUDA_BIN_DIR)
 	# @cd cuda/kmeans;			make;	cp kmeans $(CUDA_BIN_DIR)
 	@cd cuda/lavaMD;			make;	cp lavaMD $(CUDA_BIN_DIR)
 	# @cd cuda/leukocyte;		make;	cp CUDA/leukocyte $(CUDA_BIN_DIR)
