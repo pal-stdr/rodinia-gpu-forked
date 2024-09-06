@@ -1,0 +1,12 @@
+data/*
+!data/.gitkeep
+
+*.o
+*.orig
+*.swp
+*.gch
+*.out
+
+# Added by pal
+.vscode/browse.vc.*
+bin/
