@@ -132,7 +132,7 @@ clean: $(SRC)
 ```
 
 
-## 1.4. CFD [cuda/cfd/Makefile](cuda/cfd/Makefile) fix
+## 1.5. CFD [cuda/cfd/Makefile](cuda/cfd/Makefile) fix
 
 - Here we only need the `euler3d` bin. So we can comment out rest of the `euler3d_double`, `pre_euler3d`, `pre_euler3d_double` bin targets.
 
@@ -173,7 +173,7 @@ CUDA: cuda_create_bin_dir
 
 
 
-## 1.5. GAUSSIAN [cuda/gaussian/Makefile](cuda/gaussian/Makefile) fix
+## 1.6. GAUSSIAN [cuda/gaussian/Makefile](cuda/gaussian/Makefile) fix
 
 ```Makefile
 # CC := $(CUDA_DIR)/bin/nvcc
@@ -197,7 +197,7 @@ clean:
 ```
 
 
-## 1.6. HOTSPOT [cuda/hotspot/Makefile](cuda/hotspot/Makefile) fix
+## 1.7. HOTSPOT [cuda/hotspot/Makefile](cuda/hotspot/Makefile) fix
 
 ```Makefile
 # CC := $(CUDA_DIR)/bin/nvcc
@@ -227,7 +227,7 @@ clean: $(SRC)
 ```
 
 
-## 1.7. HOTSPOT3D [cuda/hotspot3D/Makefile](cuda/hotspot3D/Makefile) fix
+## 1.8. HOTSPOT3D [cuda/hotspot3D/Makefile](cuda/hotspot3D/Makefile) fix
 
 - By default this is not added. So we have to add it to [Makefile](Makefile)
 
@@ -276,4 +276,112 @@ $(OBJ): $(SRC)
 
 clean: $(SRC)
 	rm -f $(EXE) $(EXE).linkinfo $(OUTPUT) *.o
+```
+
+
+
+## 1.9. lavaMD [cuda/lavaMD/Makefile](cuda/lavaMD/Makefile) fix
+
+- **Have to be very careful on this one. Polygeist Ivanov heavily updated the this kernel launch parameters.**
+
+- **The performance result from this kernel is discussed heavily in Polygeist paper.**
+
+- **[cuda/lavaMD/main.cu](cuda/lavaMD/main.cu) didn't exist with the core rodinia before. They've created a separate this [cuda/lavaMD/main.cu](cuda/lavaMD/main.cu) file separately. And then called the kernel `kernel_gpu_cuda<<<blocks, threads>>>` from that `.cu` file and put their own timer on around it. The timer function name is `MY_START_CLOCK(lavaMD, )`. I have manually commented out the time calls. You can find them in line `230` & `237`. And they are defined in here [`#define MY_START_CLOCK(APP_ID, CLOCK_ID)`](https://github.com/ivanradanov/rodinia/blob/a97759e748669518c385f6d1e71c4b59ab43b121/common/my_timing.h#L20)**
+
+- **Also the have put their own verifier function named `MY_VERIFY_DOUBLE_CUSTOM(fv_cpu, dim_cpu.space_mem / sizeof(fp), 1e-13, 1)`. I have no idea what it does. I have commented this out. This is a macro you can find here [`#define MY_VERIFY_DOUBLE_CUSTOM(ARRAY_PTR, SIZE, C1, C2)`](https://github.com/ivanradanov/rodinia/blob/a97759e748669518c385f6d1e71c4b59ab43b121/common/my_verification.h#L46)**
+
+- **Also in [cuda/lavaMD/main.cu](cuda/lavaMD/main.cu), they have multiple `main.h` call at line `35`, and `50`. It was giving error. I have commented one out.**
+
+- **In [cuda/lavaMD/makefile](cuda/lavaMD/makefile), also lot of changes. I have removed `$(POLYGEIST_LLVM_STRUCT_ABI_0)` from [`$(NVCC_FLAGS) $(POLYGEIST_LLVM_STRUCT_ABI_0)`](https://github.com/ivanradanov/rodinia/blob/a97759e748669518c385f6d1e71c4b59ab43b121/cuda/lavaMD/makefile#L52) line. I found the assigned value to this `Makefile` variable is `POLYGEIST_LLVM_STRUCT_ABI_0 = --struct-abi=0` defined in Ivanov's [`rodinia/common/common.polygeist.host.make.config`](https://github.com/ivanradanov/rodinia/blob/a97759e748669518c385f6d1e71c4b59ab43b121/common/common.polygeist.host.make.config#L33).**
+
+
+```Makefile
+include ../../common/make.config
+
+# Example
+# target: dependencies
+	# command 1
+	# command 2
+          # .
+          # .
+          # .
+	# command n
+
+ifdef OUTPUT
+override OUTPUT = -DOUTPUT
+endif
+
+# C_C = gcc
+# C_C = $(CC)
+# OMP_LIB = -lgomp
+# OMP_FLAG = -fopenmp
+
+# CUD_C = $(NVCC)
+# OMP_FLAG = 	-Xcompiler paste_one_here
+# CUDA_FLAG = -arch sm_13
+# CUDA_FLAG = $(NVCC_FLAGS)
+
+# link objects (binaries) together
+lavaMD:		main.o \
+			./util/num/num.o \
+			./util/timer/timer.o \
+			./util/device/device.o
+	$(LINKER) $(KERNEL_DIM) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) main.o \
+			./util/num/num.o \
+			./util/timer/timer.o \
+			./util/device/device.o \
+			-o lavaMD
+
+# compile function files into objects (binaries)
+main.o:		main.h \
+			main.cu \
+			./kernel/kernel_gpu_cuda_wrapper.h \
+			./kernel/kernel_gpu_cuda_wrapper.cu \
+			./util/num/num.h \
+			./util/num/num.c \
+			./util/timer/timer.h \
+			./util/timer/timer.c \
+			./util/device/device.h \
+			./util/device/device.cu
+	$(NVCC)	$(KERNEL_DIM) $(NVCC_FLAGS) $(OUTPUT) main.cu \
+			-c \
+			-o main.o
+
+# ./kernel/kernel_gpu_cuda_wrapper.o:	./kernel/kernel_gpu_cuda_wrapper.h \
+# 									./kernel/kernel_gpu_cuda_wrapper.cu
+# 	$(CUD_C) $(KERNEL_DIM)						./kernel/kernel_gpu_cuda_wrapper.cu \
+# 									-c \
+# 									-o ./kernel/kernel_gpu_cuda_wrapper.o \
+# 									-O3 \
+# 									$(CUDA_FLAG)
+
+./util/num/num.o:	./util/num/num.h \
+					./util/num/num.c
+	$(CC) $(CC_FLAGS)	./util/num/num.c \
+					-c \
+					-o ./util/num/num.o
+
+
+./util/timer/timer.o:	./util/timer/timer.h \
+						./util/timer/timer.c
+	$(CC) $(CC_FLAGS)	./util/timer/timer.c \
+						-c \
+						-o ./util/timer/timer.o
+						
+
+./util/device/device.o:	./util/device/device.h \
+						./util/device/device.cu
+	$(NVCC) $(NVCC_FLAGS)	./util/device/device.cu \
+						-c \
+						-o ./util/device/device.o
+						
+
+# delete all object and executable files
+clean:
+	rm	*.o \
+		./kernel/*.o \
+		./util/num/*.o \
+		./util/timer/*.o \
+		./util/device/*.o \
+		lavaMD
 ```
