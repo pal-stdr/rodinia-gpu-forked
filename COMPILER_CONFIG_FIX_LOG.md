@@ -51,3 +51,32 @@ CUDA: cuda_create_bin_dir
 	@cd cuda/bfs;			make;	cp bfs $(CUDA_BIN_DIR)
     # .....................
 ```
+
+
+
+## 1.2. Backprop [cuda/backprop/Makefile](cuda/backprop/Makefile) fix
+
+Keep in mind, for `$(NVCC_FLAGS)` (i.e. `GPU_TARGETED_ARCH_FLAGS := -gencode arch=compute_86,code=sm_86`)
+
+- flags should be passed both to object generation + object linking phase.
+- Only `*.cu` files need such arch specific flags.
+
+```Makefile
+backprop: backprop.o facetrain.o imagenet.o backprop_cuda.o 
+	$(LINKER) $(LINKER_FLAGS) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) backprop.o facetrain.o imagenet.o backprop_cuda.o -o backprop
+
+%.o: %.[ch]
+	$(CC) $(CC_FLAGS) $< -c -o $@
+
+facetrain.o: facetrain.c backprop.h
+	$(CC) $(CC_FLAGS) facetrain.c -c -o $@
+	
+backprop.o: backprop.c backprop.h
+	$(CC) $(CC_FLAGS) backprop.c -c -o $@
+
+backprop_cuda.o: backprop_cuda.cu backprop.h
+	$(NVCC) $(NVCC_FLAGS) -c backprop_cuda.cu -o $@
+
+imagenet.o: imagenet.c backprop.h
+	$(CC) $(CC_FLAGS) imagenet.c -c -o $@
+```
