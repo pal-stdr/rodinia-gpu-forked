@@ -1,22 +1,20 @@
-CC = gcc
-NVCC = nvcc
+include ../../../common/make.config
+
+# CC = gcc
+# NVCC = nvcc
 
 DEFS += \
 		-DGPU_TIMER \
 		$(SPACE)
 
-NVCCFLAGS += -I../common \
-			 -O3 \
-			 -use_fast_math \
-			 -arch=sm_20 \
-			 -lm \
+NVCC_FLAGS += -I../common \
 			 $(SPACE)
 
-CFLAGS += -I../common \
-					-I/usr/include/cuda \
-		  -O3 \
-		  -Wall \
-		  $(SPACE)
+# CFLAGS += -I../common \
+# 					-I/usr/include/cuda \
+# 		  -O3 \
+# 		  -Wall \
+# 		  $(SPACE)
 
 # Add source files here
 EXECUTABLE  := lud_cuda
@@ -31,18 +29,18 @@ OBJS = ../common/common.o lud.o lud_kernel.o
 all : $(EXECUTABLE)
 
 .c.o : 
-	$(NVCC) $(KERNEL_DIM) $(NVCCFLAGS) $(DEFS) -o $@ -c $<
+	$(CC) $(KERNEL_DIM) $(CC_FLAGS) $(DEFS) -c $< -o $@
 
 %.o:	%.cu 
-	$(NVCC) $(KERNEL_DIM) $(NVCCFLAGS) $(DEFS) -o $@ -c $<
+	$(NVCC) $(KERNEL_DIM) $(NVCC_FLAGS) $(DEFS) -c $< -o $@
 
-clang: $(SRC)
-	clang++ lud.cu lud_kernel.cu ../common/common.c -o $(EXECUTABLE) \
-		-I../common -I../../util --cuda-gpu-arch=sm_20 \
-		-L/usr/local/cuda/lib64 -lcudart_static -ldl -lrt -pthread -DTIMING
+# clang: $(SRC)
+# 	clang++ lud.cu lud_kernel.cu ../common/common.c -o $(EXECUTABLE) \
+# 		-I../common -I../../util --cuda-gpu-arch=sm_20 \
+# 		-L/usr/local/cuda/lib64 -lcudart_static -ldl -lrt -pthread -DTIMING
 
 $(EXECUTABLE) : $(OBJS)
-	$(NVCC) $(NVCCFLAGS) -o $@  $?
+	$(LINKER) $(NVCC_FLAGS)  $? -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $@
 
 clean:
 	rm -f $(EXECUTABLE) $(OBJS) *.linkinfo
