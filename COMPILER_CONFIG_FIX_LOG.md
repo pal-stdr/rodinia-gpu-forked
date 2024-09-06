@@ -130,3 +130,43 @@ $(OBJ): $(SRC)
 clean: $(SRC)
 	rm -f $(EXE) $(EXE).linkinfo result.txt *.o
 ```
+
+
+## 1.4. CFD [cuda/cfd/Makefile](cuda/cfd/Makefile) fix
+
+- Here we only need the `euler3d` bin. So we can comment out rest of the `euler3d_double`, `pre_euler3d`, `pre_euler3d_double` bin targets.
+
+
+```Makefile
+CUTIL_LIB = $(NVCC_FLAGS)
+CUDA_SDK_PATH = $(CUDA_SAMPLES_PATH_)
+
+
+all: euler3d # euler3d_double pre_euler3d pre_euler3d_double 
+
+euler3d: euler3d.cu
+	$(LINKER) $(KERNEL_DIM) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib $(CUTIL_LIB) euler3d.cu -o euler3d
+
+# euler3d_double: euler3d_double.cu
+# 	$(NVCC) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib $(CUTIL_LIB) euler3d_double.cu -o euler3d_double
+
+
+# pre_euler3d: pre_euler3d.cu
+# 	$(NVCC) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib $(CUTIL_LIB) pre_euler3d.cu -o pre_euler3d
+
+
+# pre_euler3d_double: pre_euler3d_double.cu
+# 	$(NVCC) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib $(CUTIL_LIB) pre_euler3d_double.cu -o pre_euler3d_double
+
+
+clean:
+	rm -f euler3d euler3d_double pre_euler3d pre_euler3d_double *.linkinfo
+```
+
+- And have to update [Makefile](Makefile) according to that.
+
+```Makefile
+CUDA: cuda_create_bin_dir
+	# @cd cuda/cfd;				make;	cp euler3d euler3d_double pre_euler3d pre_euler3d_double $(CUDA_BIN_DIR)
+	@cd cuda/cfd;				make;	cp euler3d $(CUDA_BIN_DIR)
+```
