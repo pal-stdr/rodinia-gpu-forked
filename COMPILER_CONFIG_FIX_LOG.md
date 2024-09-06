@@ -53,8 +53,37 @@ CUDA: cuda_create_bin_dir
 ```
 
 
+## 1.2. Common config is needed [common/nvcc.host.make.config](common/nvcc.host.make.config)
 
-## 1.2. Backprop [cuda/backprop/Makefile](cuda/backprop/Makefile) fix
+And the content is
+
+```Makefile
+CC = /usr/local/$(CUDA_VERSION)/bin/nvcc
+CXX = /usr/local/$(CUDA_VERSION)/bin/nvcc
+NVCC = /usr/local/$(CUDA_VERSION)/bin/nvcc
+LINKER = /usr/local/$(CUDA_VERSION)/bin/nvcc
+
+# Set GPU arch targeted optimizations. If you don't want, set it empty
+GPU_TARGETED_ARCH_FLAGS := -gencode arch=compute_86,code=sm_86
+
+CC_FLAGS = -O3 -lgomp
+CXX_FLAGS = -O3 -lgomp
+
+# Set CUDA object compiler flags (i.e. optimizations)
+NVCC_FLAGS += $(GPU_TARGETED_ARCH_FLAGS)
+NVCC_FLAGS += -O3 -lgomp
+
+# Set CUDA object linker flags (i.e. libs, optimizations, etc.)
+LINKER_FLAGS += -lcudart -lcuda -lm
+LINKER_FLAGS += -O3 -lgomp
+
+CUDA_SAMPLES_PATH_ = /usr/local/$(CUDA_VERSION)/samples/
+
+COMPILER_NAME = nvcc
+```
+
+
+## 1.3. Backprop [cuda/backprop/Makefile](cuda/backprop/Makefile) fix
 
 Keep in mind, for `$(NVCC_FLAGS)` (i.e. `GPU_TARGETED_ARCH_FLAGS := -gencode arch=compute_86,code=sm_86`)
 
@@ -79,4 +108,25 @@ backprop_cuda.o: backprop_cuda.cu backprop.h
 
 imagenet.o: imagenet.c backprop.h
 	$(CC) $(CC_FLAGS) imagenet.c -c -o $@
+```
+
+
+## 1.4. BFS [cuda/bfs/Makefile](cuda/bfs/Makefile) fix
+
+We donot need unnecessary targets like `release:`, `clang:`, `enum:`, `debug:`, `debugenum:`, `clean:`. So the clean `Makefile` is this
+
+```Makefile
+SRC = bfs.cu
+OBJ = bfs.o
+EXE = bfs.out
+
+
+$(EXE): $(OBJ)
+	$(LINKER) $(NVCC_FLAGS) $(OBJ) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
+
+$(OBJ): $(SRC)
+	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ -I../util
+
+clean: $(SRC)
+	rm -f $(EXE) $(EXE).linkinfo result.txt *.o
 ```
