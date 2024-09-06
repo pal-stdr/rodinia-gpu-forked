@@ -1,18 +1,20 @@
 include ../../common/make.config
 
-CC := $(CUDA_DIR)/bin/nvcc
-
-INCLUDE := $(CUDA_DIR)/include
+# CC := $(CUDA_DIR)/bin/nvcc
+# INCLUDE := $(CUDA_DIR)/include
 
 SRC = gaussian.cu
 EXE = gaussian
 
-release: $(SRC)
-	$(CC) $(KERNEL_DIM) $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+$(EXE): gaussian.o
+	$(LINKER) $(NVCC_FLAGS) $(LINKER_FLAGS) gaussian.o -o $(EXE)
 
-clang: $(SRC)
-	clang++ $(SRC) -o $(EXE) -I../util --cuda-gpu-arch=sm_20 \
-		-L/usr/local/cuda/lib64 -lcudart_static -ldl -lrt -pthread -DTIMING
+gaussian.o: $(SRC)
+	$(NVCC) $(KERNEL_DIM) $(NVCC_FLAGS) -c $(SRC) -o gaussian.o
+
+# clang: $(SRC)
+# 	clang++ $(SRC) -o $(EXE) -I../util --cuda-gpu-arch=sm_20 \
+# 		-L/usr/local/cuda/lib64 -lcudart_static -ldl -lrt -pthread -DTIMING
 
 clean:
-	rm gaussian
+	rm gaussian *.o
