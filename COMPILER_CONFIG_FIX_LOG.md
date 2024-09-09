@@ -11,6 +11,8 @@ Update the [Makefile](Makefile) like following
 - Update every cleaning target from this
 
 ```Makefile
+include ../../common/make.config
+
 CUDA_clean:
 	cd $(CUDA_BIN_DIR); rm -f *
 	for dir in $(CUDA_DIRS) ; do cd cuda/$$dir ; make clean ; cd ../.. ; done
@@ -58,6 +60,8 @@ CUDA: cuda_create_bin_dir
 And the content is
 
 ```Makefile
+include ../../common/make.config
+
 CC = /usr/local/$(CUDA_VERSION)/bin/nvcc
 CXX = /usr/local/$(CUDA_VERSION)/bin/nvcc
 NVCC = /usr/local/$(CUDA_VERSION)/bin/nvcc
@@ -91,6 +95,8 @@ Keep in mind, for `$(NVCC_FLAGS)` (i.e. `GPU_TARGETED_ARCH_FLAGS := -gencode arc
 - Only `*.cu` files need such arch specific flags.
 
 ```Makefile
+include ../../common/make.config
+
 backprop: backprop.o facetrain.o imagenet.o backprop_cuda.o 
 	$(LINKER) $(LINKER_FLAGS) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) backprop.o facetrain.o imagenet.o backprop_cuda.o -o backprop
 
@@ -138,6 +144,8 @@ clean: $(SRC)
 
 
 ```Makefile
+include ../../common/make.config
+
 CUTIL_LIB = $(NVCC_FLAGS)
 CUDA_SDK_PATH = $(CUDA_SAMPLES_PATH_)
 
@@ -200,6 +208,8 @@ clean:
 ## 1.7. HOTSPOT [cuda/hotspot/Makefile](cuda/hotspot/Makefile) fix
 
 ```Makefile
+include ../../common/make.config
+
 # CC := $(CUDA_DIR)/bin/nvcc
 # INCLUDE := $(CUDA_DIR)/include
 
@@ -486,4 +496,51 @@ clean :
 #data :
 #	mkdir data
 #	./gen_dataset.sh
+```
+
+
+
+## 1.12. nw [cuda/nw/Makefile](cuda/nw/Makefile) fix
+
+- **Actual binary name is `needle`.**
+
+- **Not sure that targets, `clang`, `enum`, `debug`, `debugenum` are being used or not! I didn't see those targets are called while doing the compilation.**
+
+```Makefile
+include ../../common/make.config
+
+# CC := $(CUDA_DIR)/bin/nvcc
+CC := $(NVCC)
+
+
+# INCLUDE := $(CUDA_DIR)/include
+
+SRC = needle.cu
+OBJ = needle.o
+EXE = needle
+
+# release: $(SRC)
+# 	$(CC) ${KERNEL_DIM} $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR)
+
+$(EXE): $(OBJ)
+	$(LINKER) $(OBJ) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
+
+$(OBJ): $(SRC)
+	$(NVCC) $(NVCC_FLAGS) -I../util -c $< -o $@
+
+clang: $(SRC)
+	clang++ $(SRC) -o $(EXE) -I../util --cuda-gpu-arch=sm_20 \
+		-L/usr/local/cuda/lib64 -lcudart_static -ldl -lrt -pthread -DTIMING
+
+enum: $(SRC)
+	$(CC) ${KERNEL_DIM} -deviceemu $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+
+debug: $(SRC)
+	$(CC) ${KERNEL_DIM} -g $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+
+debugenum: $(SRC)
+	$(CC) ${KERNEL_DIM} -g -deviceemu $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR) 
+
+clean: $(SRC)
+	rm -f $(EXE) $(EXE).linkinfo result.txt *.o
 ```
