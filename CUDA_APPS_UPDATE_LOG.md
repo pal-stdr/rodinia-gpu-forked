@@ -25,3 +25,18 @@
 - Only change in `bfs.cu`
 
 - Run config update `run`
+
+
+
+# 3. cfd [cuda/cfd/](cuda/cfd/) update
+
+- Only change in `euler3d.cu`
+
+- [`common/make.config`](common/make.config) adjusted getting headers `helper_cuda.h`, `helper_timer.h` from `/usr/local/$(CUDA_DIR)/samples/common/inc/` path
+
+```Makefile
+SDK_DIR = /usr/local/$(CUDA_DIR)/samples/
+CUDA_SAMPLES_PATH_ = $(SDK_DIR)
+```
+
+- Run config update `run`

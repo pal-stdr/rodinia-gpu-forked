@@ -135,6 +135,8 @@ void dump(float* variables, int nel, int nelr)
 	float* h_variables = new float[nelr*NVAR];
 	download(h_variables, variables, nelr*NVAR);
 
+	MY_VERIFY_FLOAT_CUSTOM(h_variables, nelr*NVAR, 1.0e-06, 1);
+
 	{
 		std::ofstream file("density");
 		file << nel << " " << nelr << std::endl;
@@ -422,7 +424,7 @@ int main(int argc, char** argv)
 
 	if (argc < 2)
 	{
-		std::cout << "specify data file name" << std::endl;
+		//std::cout << "specify data file name" << std::endl;
 		return 0;
 	}
 	const char* data_file_name = argv[1];
@@ -430,11 +432,11 @@ int main(int argc, char** argv)
 	cudaDeviceProp prop;
 	int dev;
 	
-	checkCudaErrors(cudaSetDevice(0));
-	checkCudaErrors(cudaGetDevice(&dev));
-	checkCudaErrors(cudaGetDeviceProperties(&prop, dev));
+	//checkCudaErrors(cudaSetDevice(0));
+	//checkCudaErrors(cudaGetDevice(&dev));
+	//checkCudaErrors(cudaGetDeviceProperties(&prop, dev));
 	
-	printf("Name:                     %s\n", prop.name);
+	//printf("Name:                     %s\n", prop.name);
 
 	// set far field conditions and load them into constant memory on the gpu
 	{
@@ -555,16 +557,17 @@ int main(int argc, char** argv)
 	cudaThreadSynchronize();
 
 	// these need to be computed the first time in order to compute time step
-	std::cout << "Starting..." << std::endl;
+	//std::cout << "Starting..." << std::endl;
 
-	StopWatchInterface *timer = 0;
+	//StopWatchInterface *timer = 0;
 	  //	unsigned int timer = 0;
 
 	// CUT_SAFE_CALL( cutCreateTimer( &timer));
 	// CUT_SAFE_CALL( cutStartTimer( timer));
-	sdkCreateTimer(&timer); 
-	sdkStartTimer(&timer); 
+	//sdkCreateTimer(&timer); 
+	//sdkStartTimer(&timer); 
 	// Begin iterations
+	MY_START_CLOCK(cfd, );
 	for(int i = 0; i < iterations; i++)
 	{
 		copy<float>(old_variables, variables, nelr*NVAR);
@@ -580,20 +583,28 @@ int main(int argc, char** argv)
 			time_step(j, nelr, old_variables, variables, step_factors, fluxes);
 			getLastCudaError("time_step failed");			
 		}
+
+		MY_DEVICE_VERIFY_FLOAT_CUSTOM(variables, nelr * NVAR, 1.0e-07, 1);
+		MY_DEVICE_VERIFY_FLOAT(old_variables, nelr * NVAR);
+		MY_DEVICE_VERIFY_FLOAT_CUSTOM(fluxes, nelr * NVAR, 1.0e-05, 1);
+		MY_DEVICE_VERIFY_FLOAT(step_factors, nelr);
+		MY_DEVICE_VERIFY_FLOAT(normals, nelr * NDIM * NNB);
+		MY_DEVICE_VERIFY_INT(elements_surrounding_elements, nelr * NNB);
 	}
+	MY_STOP_CLOCK(cfd, );
 
 	cudaThreadSynchronize();
 	//	CUT_SAFE_CALL( cutStopTimer(timer) );  
-	sdkStopTimer(&timer); 
+	//sdkStopTimer(&timer); 
 
-	std::cout  << (sdkGetAverageTimerValue(&timer)/1000.0)  / iterations << " seconds per iteration" << std::endl;
+	//std::cout  << (sdkGetAverageTimerValue(&timer)/1000.0)  / iterations << " seconds per iteration" << std::endl;
 
-	std::cout << "Saving solution..." << std::endl;
-	dump(variables, nel, nelr);
-	std::cout << "Saved solution..." << std::endl;
+	//std::cout << "Saving solution..." << std::endl;
+	//dump(variables, nel, nelr);
+	//std::cout << "Saved solution..." << std::endl;
 
 	
-	std::cout << "Cleaning up..." << std::endl;
+	//std::cout << "Cleaning up..." << std::endl;
 	dealloc<float>(areas);
 	dealloc<int>(elements_surrounding_elements);
 	dealloc<float>(normals);
@@ -603,7 +614,7 @@ int main(int argc, char** argv)
 	dealloc<float>(fluxes);
 	dealloc<float>(step_factors);
 
-	std::cout << "Done..." << std::endl;
+	//std::cout << "Done..." << std::endl;
 
 	return 0;
 }
