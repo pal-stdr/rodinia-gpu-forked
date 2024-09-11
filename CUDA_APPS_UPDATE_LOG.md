@@ -88,3 +88,11 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 - Only change in `nn_cuda.cu`
 
 - Run config update `run`
+
+
+
+# 10. nw [cuda/nw/](cuda/nw/) update
+
+- Only change in `needle.cu`
+
+- Run config update `run`

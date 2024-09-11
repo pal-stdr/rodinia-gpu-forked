@@ -168,20 +168,26 @@ void runTest( int argc, char** argv)
 
 	printf("Processing top-left matrix\n");
 	//process top-left matrix
+	MY_START_CLOCK(nw, _total);
+	MY_START_CLOCK(nw, needle_cuda_shared_1);
 	for( int i = 1 ; i <= block_width ; i++){
 		dimGrid.x = i;
 		dimGrid.y = 1;
 		needle_cuda_shared_1<<<dimGrid, dimBlock>>>(referrence_cuda, matrix_cuda
 		                                      ,max_cols, penalty, i, block_width); 
 	}
+	MY_STOP_CLOCK(nw, needle_cuda_shared_1);
 	printf("Processing bottom-right matrix\n");
     //process bottom-right matrix
+	MY_START_CLOCK(nw, needle_cuda_shared_2);
 	for( int i = block_width - 1  ; i >= 1 ; i--){
 		dimGrid.x = i;
 		dimGrid.y = 1;
 		needle_cuda_shared_2<<<dimGrid, dimBlock>>>(referrence_cuda, matrix_cuda
 		                                      ,max_cols, penalty, i, block_width); 
 	}
+	MY_STOP_CLOCK(nw, needle_cuda_shared_2);
+	MY_STOP_CLOCK(nw, _total);
 
 #ifdef  TIMING
     gettimeofday(&tv_kernel_end, NULL);
@@ -190,6 +196,8 @@ void runTest( int argc, char** argv)
 #endif
 
     cudaMemcpy(output_itemsets, matrix_cuda, sizeof(int) * size, cudaMemcpyDeviceToHost);
+
+    MY_VERIFY_INT(output_itemsets, size);
 	
 //#define TRACEBACK
 #ifdef TRACEBACK
