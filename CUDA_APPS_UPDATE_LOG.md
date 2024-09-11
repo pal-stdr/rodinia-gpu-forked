@@ -56,3 +56,11 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 - Only change in `hotspot.cu`
 
 - Run config update `run`
+
+
+
+# 6. hotspot3D [cuda/hotspot3D/](cuda/hotspot3D/) update
+
+- Only change in `3D.cu`
+
+- Run config update `run`
