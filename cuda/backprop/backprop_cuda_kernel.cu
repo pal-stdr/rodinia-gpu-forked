@@ -17,7 +17,7 @@ bpnn_layerforward_CUDA(float *input_cuda,
 					   int in,
 					   int hid) 
 {
-   int by = blockIdx.y;
+   int by = blockIdx.x;
    int tx = threadIdx.x;
    int ty = threadIdx.y;
 
@@ -71,7 +71,7 @@ bpnn_layerforward_CUDA(float *input_cuda,
 
    __syncthreads();
 
-   if ( tx == 0 ) {
+   if ( ty == 0 && tx == 0 ) {
 	   hidden_partial_sum[by * hid + ty] = weight_matrix[tx][ty];
    }
 
@@ -87,7 +87,7 @@ __global__ void bpnn_adjust_weights_cuda(float * delta,
 {
   
   
-   int by = blockIdx.y;
+   int by = blockIdx.x;
 
    int tx = threadIdx.x;
    int ty = threadIdx.y;

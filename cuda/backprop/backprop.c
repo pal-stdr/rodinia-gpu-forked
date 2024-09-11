@@ -7,11 +7,14 @@
  ******************************************************************
  */
 
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "backprop.h"
 #include <math.h>
+#include <unistd.h>
 //#define OPEN
 
 #define ABS(x)          (((x) > 0.0) ? (x) : (-(x)))
@@ -40,8 +43,7 @@ float dpn1()
 
 /*** The squashing function.  Currently, it's a sigmoid. ***/
 
-float squash(x)
-float x;
+float squash(float x)
 {
   float m;
   //x = -x;
@@ -89,7 +91,7 @@ int m, n;
 }
 
 
-bpnn_randomize_weights(w, m, n)
+void bpnn_randomize_weights(w, m, n)
 float **w;
 int m, n;
 {
@@ -103,7 +105,7 @@ int m, n;
   }
 }
 
-bpnn_randomize_row(w, m)
+void bpnn_randomize_row(w, m)
 float *w;
 int m;
 {
@@ -115,7 +117,7 @@ int m;
 }
 
 
-bpnn_zero_weights(w, m, n)
+void bpnn_zero_weights(w, m, n)
 float **w;
 int m, n;
 {
@@ -129,7 +131,7 @@ int m, n;
 }
 
 
-void bpnn_initialize(seed)
+void bpnn_initialize(int seed)
 {
   printf("Random number generator seed: %d\n", seed);
   srand(seed);
@@ -302,8 +304,7 @@ int nh, no;
 }
 
 
-void bpnn_adjust_weights(delta, ndelta, ly, nly, w, oldw)
-float *delta, *ly, **w, **oldw;
+void bpnn_adjust_weights(float* delta, int ndelta, float* ly, int nly, float** w, float** oldw)
 {
   float new_dw;
   int k, j;
