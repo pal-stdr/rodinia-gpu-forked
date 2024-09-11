@@ -27,8 +27,6 @@
 
 #define MAX_THREADS_PER_BLOCK 512
 
-int no_of_nodes;
-int edge_list_size;
 FILE *fp;
 
 #ifdef TIMING
@@ -60,8 +58,6 @@ void BFSGraph(int argc, char** argv);
 ////////////////////////////////////////////////////////////////////////////////
 int main( int argc, char** argv) 
 {
-	no_of_nodes=0;
-	edge_list_size=0;
 	BFSGraph( argc, argv);
 }
 
@@ -75,7 +71,8 @@ fprintf(stderr,"Usage: %s <input_file>\n", argv[0]);
 ////////////////////////////////////////////////////////////////////////////////
 void BFSGraph( int argc, char** argv) 
 {
-
+	int no_of_nodes=0;
+	int edge_list_size=0;
     char *input_f;
 	if(argc!=2){
 	Usage(argc, argv);
@@ -206,6 +203,8 @@ void BFSGraph( int argc, char** argv)
 	printf("Start traversing the tree\n");
 	bool stop;
 	//Call the Kernel untill all the elements of Frontier are not false
+
+	MY_START_CLOCK(bfs, );
 	do
 	{
 		//if no thread changes this value then the loop stops
@@ -243,6 +242,7 @@ void BFSGraph( int argc, char** argv)
 		k++;
 	}
 	while(stop);
+	MY_STOP_CLOCK(bfs, );
 
 
 	printf("Kernel Executed %d times\n",k);
@@ -257,6 +257,11 @@ void BFSGraph( int argc, char** argv)
 	tvsub(&tv_d2h_end, &tv_d2h_start, &tv);
 	d2h_time += tv.tv_sec * 1000.0 + (float) tv.tv_usec / 1000.0;
 #endif
+
+
+
+
+	MY_VERIFY_INT(h_cost, no_of_nodes);
 
 	//Store the result into a file
 	FILE *fpo = fopen("result.txt","w");

@@ -17,3 +17,11 @@
 - add `dal.c`
 
 - Run config update `run`
+
+
+
+# 2. bfs [cuda/bfs/](cuda/bfs/) update
+
+- Only change in `bfs.cu`
+
+- Run config update `run`
