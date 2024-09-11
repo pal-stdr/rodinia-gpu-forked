@@ -80,3 +80,11 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 - Changes in `cuda/lud/base/Makefile`, `cuda/lud/common/common.c`, `cuda/lud/cuda/lud_kernel.cu`, `cuda/lud/cuda/lud.cu`, `cuda/lud/main.h`
 
 - Run config update `run`
+
+
+
+# 9. nn [cuda/nn/](cuda/nn/) update
+
+- Only change in `nn_cuda.cu`
+
+- Run config update `run`

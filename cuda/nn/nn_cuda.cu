@@ -93,6 +93,7 @@ int main(int argc, char* argv[])
       return 0;
     }
 
+    MY_START_CLOCK(nn, total);
     int numRecords = loadData(filename,records,locations);
     if (resultsCount > numRecords) resultsCount = numRecords;
 
@@ -164,7 +165,9 @@ int main(int argc, char* argv[])
   gettimeofday(&tv_kernel_start, NULL);
 #endif
 
+  MY_START_CLOCK(nn, euclid);
     euclid<<< gridDim, threadsPerBlock >>>(d_locations,d_distances,numRecords,lat,lng);
+    MY_STOP_CLOCK(nn, euclid);
     cudaThreadSynchronize();
 
 #ifdef  TIMING
@@ -176,8 +179,11 @@ int main(int argc, char* argv[])
     //Copy data from device memory to host memory
     cudaMemcpy( distances, d_distances, sizeof(float)*numRecords, cudaMemcpyDeviceToHost );
 
+    MY_VERIFY_FLOAT_EXACT(distances, numRecords);
+
 	// find the resultsCount least distances
     findLowest(records,distances,numRecords,resultsCount);
+    MY_STOP_CLOCK(nn, total);
 
     // print out results
     if (!quiet)
@@ -192,6 +198,7 @@ int main(int argc, char* argv[])
 #ifdef  TIMING
     printf("Exec: %f\n", kernel_time);
 #endif
+    return 0;
 }
 
 int loadData(char *filename,std::vector<Record> &records,std::vector<LatLong> &locations){
