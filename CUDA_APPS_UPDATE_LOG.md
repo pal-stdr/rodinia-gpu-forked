@@ -96,3 +96,11 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 - Only change in `needle.cu`
 
 - Run config update `run`
+
+
+
+# 11. streamcluster [cuda/streamcluster/](cuda/streamcluster/) update
+
+- Changes in `cuda/streamcluster/streamcluster_cuda_cpu.cpp`, `cuda/streamcluster/streamcluster_cuda.cu`, `cuda/streamcluster/streamcluster_header.cu`
+
+- Run config update `run`
