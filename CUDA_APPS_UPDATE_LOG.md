@@ -64,3 +64,11 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 - Only change in `3D.cu`
 
 - Run config update `run`
+
+
+
+# 7. lavaMD [cuda/lavaMD/](cuda/lavaMD/) update
+
+- Changes in `cuda/lavaMD/kernel/kernel_gpu_cuda_wrapper.cu`, `cuda/lavaMD/util/device/device.cu`, `cuda/lavaMD/timer/timer.c`, `cuda/lavaMD/main.cu`, `cuda/lavaMD/main.h`
+
+- Run config update `run`

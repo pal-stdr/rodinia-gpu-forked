@@ -185,12 +185,14 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 	//======================================================================================================================================================150
 
 	// launch kernel - all boxes
+	MY_START_CLOCK(lavaMD, );
 	kernel_gpu_cuda<<<blocks, threads>>>(	par_cpu,
 											dim_cpu,
 											d_box_gpu,
 											d_rv_gpu,
 											d_qv_gpu,
 											d_fv_gpu);
+	MY_STOP_CLOCK(lavaMD, );
 
 	checkCUDAError("Start");
 	cudaThreadSynchronize();
@@ -207,6 +209,8 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 				cudaMemcpyDeviceToHost);
 
 	time5 = get_time();
+
+	MY_VERIFY_DOUBLE_EXACT(fv_cpu, dim_cpu.space_mem / sizeof(fp));
 
 	//======================================================================================================================================================150
 	//	GPU MEMORY DEALLOCATION
