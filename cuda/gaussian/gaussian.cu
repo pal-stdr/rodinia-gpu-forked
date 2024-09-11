@@ -209,10 +209,10 @@ int main(int argc, char *argv[])
     free(m);
     free(a);
     free(b);
-
 #ifdef  TIMING
 	printf("Exec: %f\n", kernel_time);
 #endif
+	return 0;
 }
 /*------------------------------------------------------
  ** PrintDeviceProperties
@@ -385,13 +385,15 @@ void ForwardSub()
     // begin timing kernels
     struct timeval time_start;
     gettimeofday(&time_start, NULL);
+    MY_START_CLOCK(gaussian, );
 	for (t=0; t<(Size-1); t++) {
 		Fan1<<<dimGrid,dimBlock>>>(m_cuda,a_cuda,Size,t);
 		cudaThreadSynchronize();
 		Fan2<<<dimGridXY,dimBlockXY>>>(m_cuda,a_cuda,b_cuda,Size,Size-t,t);
 		cudaThreadSynchronize();
-		checkCUDAError("Fan2");
+		//checkCUDAError("Fan2");
 	}
+	MY_STOP_CLOCK(gaussian, );
 	// end timing kernels
 	struct timeval time_end;
     gettimeofday(&time_end, NULL);
@@ -406,6 +408,12 @@ void ForwardSub()
 	cudaMemcpy(m, m_cuda, Size * Size * sizeof(float),cudaMemcpyDeviceToHost );
 	cudaMemcpy(a, a_cuda, Size * Size * sizeof(float),cudaMemcpyDeviceToHost );
 	cudaMemcpy(b, b_cuda, Size * sizeof(float),cudaMemcpyDeviceToHost );
+
+	MY_VERIFY_FLOAT_EXACT(m, Size * Size);
+	MY_VERIFY_FLOAT_CUSTOM(a, Size * Size, 2.0e-08, 1);
+	MY_VERIFY_FLOAT_EXACT(b, Size);
+
+
 	cudaFree(m_cuda);
 	cudaFree(a_cuda);
 	cudaFree(b_cuda);

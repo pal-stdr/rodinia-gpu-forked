@@ -40,3 +40,11 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 ```
 
 - Run config update `run`
+
+
+
+# 4. gaussian [cuda/gaussian/](cuda/gaussian/) update
+
+- Only change in `gaussian.cu`
+
+- Run config update `run`
