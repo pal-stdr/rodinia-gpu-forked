@@ -48,3 +48,11 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 - Only change in `gaussian.cu`
 
 - Run config update `run`
+
+
+
+# 5. hotspot [cuda/hotspot/](cuda/hotspot/) update
+
+- Only change in `hotspot.cu`
+
+- Run config update `run`
