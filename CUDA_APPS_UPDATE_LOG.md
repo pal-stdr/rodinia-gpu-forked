@@ -112,3 +112,11 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 - Changes in `cuda/particlefilter/ex_particle_CUDA_float_seq.cu`, `cuda/particlefilter/ex_particle_CUDA_naive_seq.cu`
 
 - Run config update `run`
+
+
+
+# 13. pathfinder [cuda/pathfinder/](cuda/pathfinder/) update
+
+- Only change in `pathfinder.cu`
+
+- Run config update `run`
