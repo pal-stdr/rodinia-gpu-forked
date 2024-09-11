@@ -7,9 +7,15 @@
 #include <fcntl.h>
 #include <float.h>
 #include <sys/time.h>
+#include <time.h>
 #define BLOCK_X 16
 #define BLOCK_Y 16
 #define PI 3.1415926535897932
+
+// when doing verification
+#if 1
+#define malloc(X) calloc((X), 1)
+#endif
 
 const int threads_per_block = 512;
 
@@ -84,8 +90,9 @@ void cuda_print_double_array(double *array_GPU, size_t size) {
 __device__ double calcLikelihoodSum(unsigned char * I, int * ind, int numOnes, int index) {
     double likelihoodSum = 0.0;
     int x;
-    for (x = 0; x < numOnes; x++)
+    for (x = 0; x < numOnes; x++) {
         likelihoodSum += (pow((double) (I[ind[index * numOnes + x]] - 100), 2) - pow((double) (I[ind[index * numOnes + x]] - 228), 2)) / 50.0;
+    }
     return likelihoodSum;
 }
 
@@ -110,6 +117,7 @@ __device__ void cdfCalc(double * CDF, double * weights, int Nparticles) {
  * returns a double representing a randomily generated number from a uniform distribution with range [0, 1)
  ******************************/
 __device__ double d_randu(int * seed, int index) {
+  return (1000 + index) / 5000000;
 
     int M = INT_MAX;
     int A = 1103515245;
@@ -128,6 +136,7 @@ __device__ double d_randu(int * seed, int index) {
 */
 
 double randu(int * seed, int index) {
+  return (1000 + index) / 5000000;
     int num = A * seed[index] + C;
     seed[index] = num % M;
     return fabs(seed[index] / ((double) M));
@@ -142,6 +151,7 @@ double randu(int * seed, int index) {
  * @see http://en.wikipedia.org/wiki/Normal_distribution, section computing value for normal random distribution
  */
 double randn(int * seed, int index) {
+  return (1000 + index) / 5000000;
     /*Box-Muller algorithm*/
     double u = randu(seed, index);
     double v = randu(seed, index);
@@ -151,6 +161,7 @@ double randn(int * seed, int index) {
 }
 
 double test_randn(int * seed, int index) {
+  return (1000 + index) / 5000000;
     //Box-Muller algortihm
     double pi = 3.14159265358979323846;
     double u = randu(seed, index);
@@ -161,6 +172,7 @@ double test_randn(int * seed, int index) {
 }
 
 __device__ double d_randn(int * seed, int index) {
+  return (1000 + index) / 5000000;
     //Box-Muller algortihm
     double pi = 3.14159265358979323846;
     double u = d_randu(seed, index);
@@ -251,6 +263,7 @@ __global__ void find_index_kernel(double * arrayX, double * arrayY, double * CDF
                 break;
             }
         }
+
         if (index == -1) {
             index = Nparticles - 1;
         }
@@ -258,19 +271,20 @@ __global__ void find_index_kernel(double * arrayX, double * arrayY, double * CDF
         xj[i] = arrayX[index];
         yj[i] = arrayY[index];
 
-        //weights[i] = 1 / ((double) (Nparticles)); //moved this code to the beginning of likelihood kernel
+        weights[i] = 1 / ((double) (Nparticles)); //moved this code to the beginning of likelihood kernel
 
     }
     __syncthreads();
 }
 
-__global__ void normalize_weights_kernel(double * weights, int Nparticles, double* partial_sums, double * CDF, double * u, int * seed) {
+__global__ void normalize_weights_kernel1(double * weights, int Nparticles, double* partial_sums, double * CDF, double * u, int * seed) {
     int block_id = blockIdx.x;
     int i = blockDim.x * block_id + threadIdx.x;
-    __shared__ double u1, sumWeights;
+    __shared__ double sumWeights;
     
-    if(0 == threadIdx.x)
+    if(0 == threadIdx.x) {
         sumWeights = partial_sums[0];
+    }
     
     __syncthreads();
     
@@ -278,11 +292,19 @@ __global__ void normalize_weights_kernel(double * weights, int Nparticles, doubl
         weights[i] = weights[i] / sumWeights;
     }
     
-    __syncthreads(); 
+    if (i == 0) {
+        u[0] = (1 / ((double) (Nparticles))) * d_randu(seed, i); // do this to allow all threads in all blocks to use the same u1
+    }
+}
+
+
+__global__ void normalize_weights_kernel2(double * weights, int Nparticles, double* partial_sums, double * CDF, double * u, int * seed) {
+    int block_id = blockIdx.x;
+    int i = blockDim.x * block_id + threadIdx.x;
+    __shared__ double u1;
     
     if (i == 0) {
         cdfCalc(CDF, weights, Nparticles);
-        u[0] = (1 / ((double) (Nparticles))) * d_randu(seed, i); // do this to allow all threads in all blocks to use the same u1
     }
     
     __syncthreads();
@@ -341,7 +363,7 @@ __global__ void likelihood_kernel(double * arrayX, double * arrayY, double * xj,
         arrayX[i] = xj[i]; 
         arrayY[i] = yj[i]; 
 
-        weights[i] = 1 / ((double) (Nparticles)); //Donnie - moved this line from end of find_index_kernel to prevent all weights from being reset before calculating position on final iteration.
+        //weights[i] = 1 / ((double) (Nparticles)); //Donnie - moved this line from end of find_index_kernel to prevent all weights from being reset before calculating position on final iteration.
 
         arrayX[i] = arrayX[i] + 1.0 + 5.0 * d_randn(seed, i);
         arrayY[i] = arrayY[i] - 2.0 + 2.0 * d_randn(seed, i);
@@ -355,17 +377,17 @@ __global__ void likelihood_kernel(double * arrayX, double * arrayY, double * xj,
             //added dev_round_double() to be consistent with roundDouble
             indX = dev_round_double(arrayX[i]) + objxy[y * 2 + 1];
             indY = dev_round_double(arrayY[i]) + objxy[y * 2];
-            
+
             ind[i * countOnes + y] = abs(indX * IszY * Nfr + indY * Nfr + k);
             if (ind[i * countOnes + y] >= max_size)
                 ind[i * countOnes + y] = 0;
         }
         likelihood[i] = calcLikelihoodSum(I, ind, countOnes, i);
-        
+
         likelihood[i] = likelihood[i] / countOnes;
-        
+
         weights[i] = weights[i] * exp(likelihood[i]); //Donnie Newell - added the missing exponential function call
-        
+
     }
 
     buffer[threadIdx.x] = 0.0;
@@ -384,17 +406,17 @@ __global__ void likelihood_kernel(double * arrayX, double * arrayY, double * xj,
         if (threadIdx.x < s) {
             buffer[threadIdx.x] += buffer[threadIdx.x + s];
         }
-        
+
         __syncthreads();
-            
+
     }
     if (threadIdx.x == 0) {
         partial_sums[blockIdx.x] = buffer[0];
     }
-    
+
     __syncthreads();
 
-    
+
 }
 
 /** 
@@ -462,8 +484,6 @@ void strelDisk(int * disk, int radius) {
             double distance = sqrt(pow((double) (x - radius + 1), 2) + pow((double) (y - radius + 1), 2));
             if (distance < radius)
                 disk[x * diameter + y] = 1;
-            else
-                disk[x * diameter + y] = 0;
         }
     }
 }
@@ -729,17 +749,20 @@ void particleFilter(unsigned char * I, int IszX, int IszY, int Nfr, int * seed, 
     int num_blocks = ceil((double) Nparticles / (double) threads_per_block);
 
 
-    for (k = 1; k < Nfr; k++) {
-        
-        likelihood_kernel << < num_blocks, threads_per_block >> > (arrayX_GPU, arrayY_GPU, xj_GPU, yj_GPU, CDF_GPU, ind_GPU, objxy_GPU, likelihood_GPU, I_GPU, u_GPU, weights_GPU, Nparticles, countOnes, max_size, k, IszY, Nfr, seed_GPU, partial_sums);
+    MY_START_CLOCK(particlefilter, float);
+    for(k = 1; k < Nfr; k++){
 
-        sum_kernel << < num_blocks, threads_per_block >> > (partial_sums, Nparticles);
+      likelihood_kernel <<< num_blocks, threads_per_block >>> (arrayX_GPU, arrayY_GPU, xj_GPU, yj_GPU, CDF_GPU, ind_GPU, objxy_GPU, likelihood_GPU, I_GPU, u_GPU, weights_GPU, Nparticles, countOnes, max_size, k, IszY, Nfr, seed_GPU, partial_sums);
 
-        normalize_weights_kernel << < num_blocks, threads_per_block >> > (weights_GPU, Nparticles, partial_sums, CDF_GPU, u_GPU, seed_GPU);
-        
-        find_index_kernel << < num_blocks, threads_per_block >> > (arrayX_GPU, arrayY_GPU, CDF_GPU, u_GPU, xj_GPU, yj_GPU, weights_GPU, Nparticles);
+      sum_kernel <<< num_blocks, threads_per_block >>> (partial_sums, Nparticles);
 
-    }//end loop
+      normalize_weights_kernel1 <<< num_blocks, threads_per_block >>> (weights_GPU, Nparticles, partial_sums, CDF_GPU, u_GPU, seed_GPU);
+      normalize_weights_kernel2 <<< num_blocks, threads_per_block >>> (weights_GPU, Nparticles, partial_sums, CDF_GPU, u_GPU, seed_GPU);
+
+      find_index_kernel <<< num_blocks, threads_per_block >>> (arrayX_GPU, arrayY_GPU, CDF_GPU, u_GPU, xj_GPU, yj_GPU, weights_GPU, Nparticles);
+
+    }
+    MY_STOP_CLOCK(particlefilter, float);
 
     //block till kernels are finished
     cudaThreadSynchronize();
@@ -763,6 +786,11 @@ void particleFilter(unsigned char * I, int IszX, int IszY, int Nfr, int * seed, 
     long long arrayY_time = get_time();
     check_error(cudaMemcpy(weights, weights_GPU, sizeof (double) *Nparticles, cudaMemcpyDeviceToHost));
     long long back_end_time = get_time();
+
+    MY_VERIFY_DOUBLE_CUSTOM(arrayX, Nparticles, 3.0, 1);
+    MY_VERIFY_DOUBLE_CUSTOM(arrayY, Nparticles, 3.0, 1);
+    MY_VERIFY_DOUBLE_CUSTOM(weights, Nparticles, 0.6, 1);
+
     printf("GPU Execution: %lf\n", elapsed_time(send_end, back_time));
     printf("FREE TIME: %lf\n", elapsed_time(back_time, free_time));
     printf("TIME TO SEND BACK: %lf\n", elapsed_time(back_time, back_end_time));
@@ -861,7 +889,7 @@ int main(int argc, char * argv[]) {
     int * seed = (int *) malloc(sizeof (int) *Nparticles);
     int i;
     for (i = 0; i < Nparticles; i++)
-        seed[i] = time(0) * i;
+	    seed[i] = i;
     //malloc matrix
     unsigned char * I = (unsigned char *) malloc(sizeof (unsigned char) *IszX * IszY * Nfr);
     long long start = get_time();

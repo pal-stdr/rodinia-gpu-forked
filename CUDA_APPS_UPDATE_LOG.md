@@ -104,3 +104,11 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 - Changes in `cuda/streamcluster/streamcluster_cuda_cpu.cpp`, `cuda/streamcluster/streamcluster_cuda.cu`, `cuda/streamcluster/streamcluster_header.cu`
 
 - Run config update `run`
+
+
+
+# 12. particlefilter [cuda/particlefilter/](cuda/particlefilter/) update
+
+- Changes in `cuda/particlefilter/ex_particle_CUDA_float_seq.cu`, `cuda/particlefilter/ex_particle_CUDA_naive_seq.cu`
+
+- Run config update `run`

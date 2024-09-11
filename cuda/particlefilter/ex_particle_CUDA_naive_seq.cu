@@ -12,9 +12,15 @@
 #include <fcntl.h>
 #include <float.h>
 #include <sys/time.h>
+#include <time.h>
 #define PI 3.1415926535897932
 #define BLOCK_X 16
 #define BLOCK_Y 16
+
+// when doing verification
+#if 1
+#define malloc(X) calloc((X), 1)
+#endif
 
 /**
 @var M value for Linear Congruential Generator (LCG); use GCC's value
@@ -226,9 +232,7 @@ void strelDisk(int * disk, int radius)
 		for(y = 0; y < diameter; y++){
 			double distance = sqrt(pow((double)(x-radius+1),2) + pow((double)(y-radius+1),2));
 			if(distance < radius)
-			    disk[x*diameter + y] = 1;
-            else
-			    disk[x*diameter + y] = 0;
+			disk[x*diameter + y] = 1;
 		}
 	}
 }
@@ -570,7 +574,9 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
 		int num_blocks = ceil((double) Nparticles/(double) threads_per_block);
 		
 		//KERNEL FUNCTION CALL
+		MY_START_CLOCK(particlefilter, naive);
 		kernel <<< num_blocks, threads_per_block >>> (arrayX_GPU, arrayY_GPU, CDF_GPU, u_GPU, xj_GPU, yj_GPU, Nparticles);
+		MY_STOP_CLOCK(particlefilter, naive);
                 cudaThreadSynchronize();
                 long long start_copy_back = get_time();
 		//CUDA memory copying back from GPU to CPU memory
@@ -582,6 +588,9 @@ void particleFilter(int * I, int IszX, int IszY, int Nfr, int * seed, int Nparti
 		printf("SENDING BACK FROM GPU TOOK: %lf\n", elapsed_time(start_copy_back, end_copy_back));
 		long long xyj_time = get_time();
 		printf("TIME TO CALC NEW ARRAY X AND Y TOOK: %f\n", elapsed_time(u_time, xyj_time));
+
+		MY_VERIFY_DOUBLE_CUSTOM(yj, Nparticles, 1.2, 1);
+		MY_VERIFY_DOUBLE_CUSTOM(xj, Nparticles, 0.9, 1);
 		
 		for(x = 0; x < Nparticles; x++){
 			//reassign arrayX and arrayY
