@@ -72,3 +72,11 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 - Changes in `cuda/lavaMD/kernel/kernel_gpu_cuda_wrapper.cu`, `cuda/lavaMD/util/device/device.cu`, `cuda/lavaMD/timer/timer.c`, `cuda/lavaMD/main.cu`, `cuda/lavaMD/main.h`
 
 - Run config update `run`
+
+
+
+# 8. lud [cuda/lud/](cuda/lud/) update
+
+- Changes in `cuda/lud/base/Makefile`, `cuda/lud/common/common.c`, `cuda/lud/cuda/lud_kernel.cu`, `cuda/lud/cuda/lud.cu`, `cuda/lud/main.h`
+
+- Run config update `run`
