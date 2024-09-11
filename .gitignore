@@ -10,3 +10,4 @@ data/*
 # Added by pal
 .vscode/browse.vc.*
 bin/
+results/

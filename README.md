@@ -5,6 +5,9 @@
 - Benchmark in the light of `ivanradanov's` work [rodinia](https://github.com/ivanradanov/rodinia/tree/cgo24), based on the paper [Retargeting and Respecializing GPU Workloads for Performance Portability](https://c.wsmoses.com/papers/polygeist24.pdf). The repo link is at the `cgo24` branch of [Polygeist](https://github.com/llvm/Polygeist/tree/cgo24)
 
 
+# Acknowledgement
+
+- Lot of code has been collected from [rodinia](https://github.com/ivanradanov/rodinia/tree/cgo24). So atmost gratitude for them.
 
 
 # Objectives
@@ -24,7 +27,11 @@
 
 # Pre-requisites
 
-- `CUDA-11.4` installed (because [rodinia](https://github.com/ivanradanov/rodinia/tree/cgo24) benchmark was done in `CUDA-11.4`)
+- For this repo, `CUDA-11.4` is used.
+
+- `CUDA-11.4` needed if you want to work with [ivanradanov's rodinia](https://github.com/ivanradanov/rodinia/tree/cgo24). Because that benchmark was done with `CUDA-11.4`.
+
+- For general experiments, you should be able to use `CUDA-11.X` or `CUDA-12.X`.
 
 - For CUDA specific compilation flag knowledge, jump to [Docs/CUDA/TARGETING_GPU_ARCH_with_COMPILATION_FLAGS.md](Docs/CUDA/TARGETING_GPU_ARCH_with_COMPILATION_FLAGS.md).
 
@@ -33,6 +40,8 @@
 # How to use
 
 ## How to compile + clean
+
+- Set the `cuda-{VERSION}` (e.g. `cuda-11.4`) in [common/make.config](common/make.config)
 
 - `make CUDA` will create `bin/linux/cuda/` (i.e. `bin/linux/{target_name}`) dir and dump cubins by algo folder names (e.g. `bin/linux/cuda/backprop`).
 

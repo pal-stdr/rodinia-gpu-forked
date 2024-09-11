@@ -55,9 +55,52 @@ CUDA: cuda_create_bin_dir
 ```
 
 
-## 1.2. Common config is needed [common/nvcc.host.make.config](common/nvcc.host.make.config)
+## 1.2. Common config is needed inside [common/](common/)
 
-And the content is
+- **All those configs are done in the shadow of `ivanradanov [rodinia's common dir](https://github.com/ivanradanov/rodinia/tree/cgo24/common) `cgo24` branch.**
+
+- **Collect [cgo24/common/my_timing.h](https://github.com/ivanradanov/rodinia/tree/cgo24/common/), [cgo24/common/my_verification.h](https://github.com/ivanradanov/rodinia/tree/cgo24/common/my_verification.h) and add here  [`my_timing.h`](common/my_timing.h) & [`my_verification.h`](common/my_verification.h). They are for measuring time and result verification.**
+
+### 1.2.1. Update [common/make.config](common/make.config)
+
+Update the content to 
+
+```Makefile
+# Added by pal
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(dir $(mkfile_path))
+
+include $(current_dir)/nvcc.host.make.config
+
+CUDA_VERSION := cuda-11.4
+
+
+# CUDA toolkit installation path
+CUDA_DIR = /usr/local/$(CUDA_VERSION)
+
+# CUDA toolkit libraries
+CUDA_LIB_DIR := $(CUDA_DIR)/lib
+ifeq ($(shell uname -m), x86_64)
+     ifeq ($(shell if test -d $(CUDA_DIR)/lib64; then echo T; else echo F; fi), T)
+     	CUDA_LIB_DIR := $(CUDA_DIR)/lib64
+     endif
+endif
+
+# CUDA SDK installation path
+SDK_DIR = /usr/local/$(CUDA_DIR)/samples/
+
+
+# include the timing header
+FLAGS_TO_ADD = -I$(current_dir)/ -include my_timing.h -include my_verification.h
+
+
+CC_FLAGS += $(FLAGS_TO_ADD)
+CXX_FLAGS += $(FLAGS_TO_ADD)
+NVCC_FLAGS += $(FLAGS_TO_ADD)
+```
+
+
+### 1.2.2. Add & define [common/nvcc.host.make.config](common/nvcc.host.make.config)
 
 ```Makefile
 include ../../common/make.config
