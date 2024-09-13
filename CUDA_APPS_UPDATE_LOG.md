@@ -99,7 +99,21 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 
 
 
-# 11. streamcluster [cuda/streamcluster/](cuda/streamcluster/) update
+# 11. srad_v1 [cuda/srad_v1/](cuda/srad_v1/) update
+
+- By default, it doesn't exist in [cuda/](cuda/) dir. Main concept is to collect it from [cuda/srad/srad_v1/](cuda/srad/srad_v1/).
+
+- But we will collect it from [https://github.com/ivanradanov/rodinia/tree/cgo24/cuda/srad_v1](https://github.com/ivanradanov/rodinia/tree/cgo24/cuda/srad_v1), and paste in [cuda/](cuda/) dir.
+
+- We have to make some changes in [`Makefile`](Makefile) so that `cuda/srad_v1/` is included in `CUDA:` target & `CUDA_DIRS` Makefile variable.
+
+- Deactivate `@cd cuda/srad/srad_v1;  make;  cp srad $(CUDA_BIN_DIR)/srad_v1` in `CUDA:` target of `Makefile`. Because we no longer need it.
+
+- Run config update `run`
+
+
+
+# 12. streamcluster [cuda/streamcluster/](cuda/streamcluster/) update
 
 - Changes in `cuda/streamcluster/streamcluster_cuda_cpu.cpp`, `cuda/streamcluster/streamcluster_cuda.cu`, `cuda/streamcluster/streamcluster_header.cu`
 
@@ -107,7 +121,7 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 
 
 
-# 12. particlefilter [cuda/particlefilter/](cuda/particlefilter/) update
+# 13. particlefilter [cuda/particlefilter/](cuda/particlefilter/) update
 
 - Changes in `cuda/particlefilter/ex_particle_CUDA_float_seq.cu`, `cuda/particlefilter/ex_particle_CUDA_naive_seq.cu`
 
@@ -115,7 +129,7 @@ CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 
 
 
-# 13. pathfinder [cuda/pathfinder/](cuda/pathfinder/) update
+# 14. pathfinder [cuda/pathfinder/](cuda/pathfinder/) update
 
 - Only change in `pathfinder.cu`
 
