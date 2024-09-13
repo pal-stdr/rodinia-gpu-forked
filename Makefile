@@ -37,7 +37,7 @@ CUDA: cuda_create_bin_dir
 	@cd cuda/lud;				make;	cp cuda/lud_cuda $(CUDA_BIN_DIR)
 	@cd cuda/nn;				make;	cp nn $(CUDA_BIN_DIR)
 	@cd cuda/nw;				make;	cp needle $(CUDA_BIN_DIR)
-	# @cd cuda/srad/srad_v1;		make;	cp srad $(CUDA_BIN_DIR)/srad_v1
+	# @cd cuda/srad/srad_v1;	make;	cp srad $(CUDA_BIN_DIR)/srad_v1
 	@cd cuda/srad_v1;			make;	cp srad $(CUDA_BIN_DIR)/srad_v1
 	# @cd cuda/srad/srad_v2;	make;   cp srad $(CUDA_BIN_DIR)/srad_v2
 	@cd cuda/streamcluster;		make;	cp sc_gpu $(CUDA_BIN_DIR)

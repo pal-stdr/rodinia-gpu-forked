@@ -66,13 +66,12 @@ CUDA: cuda_create_bin_dir
 Update the content to 
 
 ```Makefile
+CUDA_VERSION := cuda-11.4
+
+
 # Added by pal
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(dir $(mkfile_path))
-
-include $(current_dir)/nvcc.host.make.config
-
-CUDA_VERSION := cuda-11.4
 
 
 # CUDA toolkit installation path
@@ -88,24 +87,49 @@ endif
 
 # CUDA SDK installation path
 SDK_DIR = /usr/local/$(CUDA_DIR)/samples/
-CUDA_SAMPLES_PATH_ = $(SDK_DIR)
 
 
 # include the timing header
-FLAGS_TO_ADD = -I$(current_dir)/ -include my_timing.h -include my_verification.h
+FLAGS_TO_ADD = -I$(current_dir) -include my_timing.h -include my_verification.h
 
 
 CC_FLAGS += $(FLAGS_TO_ADD)
 CXX_FLAGS += $(FLAGS_TO_ADD)
 NVCC_FLAGS += $(FLAGS_TO_ADD)
+
+
+
+
+# ======== Conditionally load "nvcc.host.make.config" or "polygeist.host.make.config" =========
+
+# Conditionally set COMPILER_NAME to nvcc if not defined by the user
+# If You didn't specify "COMPILER_NAME=" by "make YOUR_TARGET COMPILER_NAME=" command, then by default, COMPILER_NAME= set to "nvcc"
+COMPILER_NAME ?= nvcc
+
+include $(current_dir)/$(COMPILER_NAME).host.make.config
+
+# ============================================================================================
+
+
+
+
+# define the compiler name
+# Important for generating results "results/cuda/out/timestamp.log"
+ifdef COMPILER_NAME
+	FLAGS_TO_ADD += -D_MY_COMPILER_NAME_=\"$(COMPILER_NAME)\"
+endif
+
+
+MY_VERIFICATION_DISABLE = 1
+ifneq ($(MY_VERIFICATION_DISABLE),0)
+    FLAGS_TO_ADD += -DMY_VERIFICATION_DISABLE
+endif
 ```
 
 
 ### 1.2.2. Add & define [common/nvcc.host.make.config](common/nvcc.host.make.config)
 
 ```Makefile
-include ../../common/make.config
-
 CC = /usr/local/$(CUDA_VERSION)/bin/nvcc
 CXX = /usr/local/$(CUDA_VERSION)/bin/nvcc
 NVCC = /usr/local/$(CUDA_VERSION)/bin/nvcc
@@ -114,8 +138,8 @@ LINKER = /usr/local/$(CUDA_VERSION)/bin/nvcc
 # Set GPU arch targeted optimizations. If you don't want, set it empty
 GPU_TARGETED_ARCH_FLAGS := -gencode arch=compute_86,code=sm_86
 
-CC_FLAGS = -O3 -lgomp
-CXX_FLAGS = -O3 -lgomp
+CC_FLAGS += -O3 -lgomp
+CXX_FLAGS += -O3 -lgomp
 
 # Set CUDA object compiler flags (i.e. optimizations)
 NVCC_FLAGS += $(GPU_TARGETED_ARCH_FLAGS)
@@ -126,8 +150,6 @@ LINKER_FLAGS += -lcudart -lcuda -lm
 LINKER_FLAGS += -O3 -lgomp
 
 CUDA_SAMPLES_PATH_ = /usr/local/$(CUDA_VERSION)/samples/
-
-COMPILER_NAME = nvcc
 ```
 
 

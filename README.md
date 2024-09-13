@@ -43,14 +43,22 @@
 
 - Set the `cuda-{VERSION}` (e.g. `cuda-11.4`) in [common/make.config](common/make.config)
 
-- `make CUDA` will create `bin/linux/cuda/` (i.e. `bin/linux/{target_name}`) dir and dump cubins by algo folder names (e.g. `bin/linux/cuda/backprop`).
+- `make CUDA` will create `bin/linux/cuda/` (i.e. `bin/linux/{target_name}`) dir and dump cubins by algo folder names (e.g. `bin/linux/cuda/backprop`). You can also find the cubins in correspondent `cuda/{algo_name}` dir (e.g. `backprop` in `cuda/backprop/backprop`).
 
 ```sh
-# Compile CUDA target
+# Compile CUDA target (By default COMPILER_NAME=nvcc flag activated)
+# By default, It will load the "nvcc.host.make.config"
 make CUDA
+
+
+# You can also pass "COMPILER_NAME=nvcc|polygeist" flag
+# For "COMPILER_NAME=polygeist", it will load "polygeist.host.make.config"
+make CUDA COMPILER_NAME=nvcc
+
 
 # Clean only CUDA target
 make CUDA_clean
+
 
 # Clean CUDA, OMP, OPENCL (Not recommended)
 make clean
