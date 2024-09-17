@@ -83,11 +83,11 @@ OPENCL:
 	cd opencl/streamcluster;		make;	cp streamcluster	$(OPENCL_BIN_DIR)
 	cd opencl/pathfinder;			make;	cp pathfinder	$(OPENCL_BIN_DIR)
 	cd opencl/particlefilter;		make;	cp OCL_particlefilter_naive OCL_particlefilter_single OCL_particlefilter_double $(OPENCL_BIN_DIR)
-	cd opencl/gaussian;					make;	cp gaussian	$(OPENCL_BIN_DIR)
-	cd opencl/nn;						make;	cp nn	$(OPENCL_BIN_DIR)
-	cd opencl/heartwall;		        make;	cp heartwall	$(OPENCL_BIN_DIR)
-	cd opencl/hybridsort;              	make;   cp hybridsort $(CUDA_BIN_DIR)
-	cd opencl/dwt2d;                   	make;   cp dwt2d  $(CUDA_BIN_DIR)
+	cd opencl/gaussian;				make;	cp gaussian	$(OPENCL_BIN_DIR)
+	cd opencl/nn;					make;	cp nn	$(OPENCL_BIN_DIR)
+	cd opencl/heartwall;		    make;	cp heartwall	$(OPENCL_BIN_DIR)
+	cd opencl/hybridsort;           make;   cp hybridsort $(CUDA_BIN_DIR)
+	cd opencl/dwt2d;                make;   cp dwt2d  $(CUDA_BIN_DIR)
 	
 clean: CUDA_clean OMP_clean OCL_clean
 

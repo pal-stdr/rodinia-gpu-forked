@@ -27,7 +27,7 @@
 
 # Pre-requisites
 
-- For this repo, `CUDA-11.4` is used.
+- For this repo, `CUDA-11.4` is tested & used.
 
 - `CUDA-11.4` needed if you want to work with [ivanradanov's rodinia](https://github.com/ivanradanov/rodinia/tree/cgo24). Because that benchmark was done with `CUDA-11.4`.
 
@@ -37,7 +37,16 @@
 
 
 
-# How to use
+# How to use `nvcc` (i.e. just CUDA) compilation flow?
+
+## Summary Flow
+
+### Just Running
+
+- **First time:** **Compile (i.e. `make CUDA`) > Prepare Datsets > Run `./scripts/run_timed_cuda.sh` script**
+- **From Second time:** **Clean old cubins (i.e. `make CUDA_clean`) > Compile again (i.e. `make CUDA`) > Run `./scripts/run_timed_cuda.sh` script**
+
+
 
 ## How to compile + clean
 
@@ -63,6 +72,36 @@ make CUDA_clean
 # Clean CUDA, OMP, OPENCL (Not recommended)
 make clean
 ```
+
+
+## How to prepare datasets
+
+- **External data is only needed for `bfs`, `cfd`, `gaussian`, `hotspot`, `hotspot3D`, `lud`, `nn`, and `srad` algos. Rest of them will be auto generated**
+
+- **`backprop`, `lavaMD`, `nw`, `streamcluster`, `particlefinder` and `pathfinder` needs no external data.**
+
+- **Jump to [PREPARE_CUDA_INPUT_DATASETS.md](PREPARE_CUDA_INPUT_DATASETS.md) doc for the details of preparing datasets.**
+
+
+
+## How to run the benchmark
+
+- Run scripts have been collected from git repo [`ivanradanov/rodinia/`](https://github.com/ivanradanov/rodinia/tree/main/scripts) and little-bit updated.
+
+- [`./scripts/run_timed_cuda.sh`](scripts/run_timed_cuda.sh) will run the benchmarks and dump outputs in `results/cuda/log` and **timing information** in `results/cuda/out`. This script will generate the correspondent output file, named with a timestamp (e.g. `results/cuda/out/2024-09-13T16:07:36,142487255+02:00.log`). Remember, After each run, it will generate a new log file to both `results/cuda/out` & ``results/cuda/log` dirs.
+
+- How the script works? `./scripts/run_timed_cuda.sh` will load the cuda app list from [`scripts/rodinia_cuda_apps_list.sh`](scripts/rodinia_cuda_apps_list.sh), then run each one of them using [`scripts/run_timed_common.sh`](scripts/run_timed_common.sh).
+
+
+- **How to run?**
+
+```sh
+# Run "scripts/run_timed_cuda.sh" from benchmark root dir
+./scripts/run_timed_cuda.sh
+```
+
+- (Not Important) [`scripts/parse_result.sh`](scripts/parse_result.sh), [`scripts/run_cpu.sh`](scripts/run_cpu.sh), [`scripts/run_gpu.sh`](scripts/run_gpu.sh) & [`scripts/run_wrap.sh`](scripts/run_wrap.sh) are by default inherited from core `rodinia`. They are not used.
+
 
 
 # Kernels that are not used
