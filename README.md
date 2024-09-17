@@ -88,7 +88,7 @@ make clean
 
 - Run scripts have been collected from git repo [`ivanradanov/rodinia/`](https://github.com/ivanradanov/rodinia/tree/main/scripts) and little-bit updated.
 
-- [`./scripts/run_timed_cuda.sh`](scripts/run_timed_cuda.sh) will run the benchmarks and dump outputs in `results/cuda/log` and **timing information** in `results/cuda/out`. This script will generate the correspondent output file, named with a timestamp (e.g. `results/cuda/out/2024-09-13T16:07:36,142487255+02:00.log`). Remember, After each run, it will generate a new log file to both `results/cuda/out` & ``results/cuda/log` dirs.
+- [`./scripts/run_timed_cuda.sh`](scripts/run_timed_cuda.sh) will run the benchmarks and dump outputs in `results/cuda/log` and **timing information** in `results/cuda/out`. This script will generate the correspondent output file, named with a timestamp (e.g. `results/cuda/out/2024-09-13T16:07:36,142487255+02:00.log`). Remember, After each run, it will generate a new log file to both `results/cuda/out` & `results/cuda/log` dirs.
 
 - How the script works? `./scripts/run_timed_cuda.sh` will load the cuda app list from [`scripts/rodinia_cuda_apps_list.sh`](scripts/rodinia_cuda_apps_list.sh), then run each one of them using [`scripts/run_timed_common.sh`](scripts/run_timed_common.sh).
 
@@ -101,6 +101,90 @@ make clean
 ```
 
 - (Not Important) [`scripts/parse_result.sh`](scripts/parse_result.sh), [`scripts/run_cpu.sh`](scripts/run_cpu.sh), [`scripts/run_gpu.sh`](scripts/run_gpu.sh) & [`scripts/run_wrap.sh`](scripts/run_wrap.sh) are by default inherited from core `rodinia`. They are not used.
+
+
+
+## How to verify that results are correct? (verification)
+
+- **(Important) Prerequisites:** You need to collect + prepare the datasets. Go through [PREPARE_CUDA_INPUT_DATASETS.md](PREPARE_CUDA_INPUT_DATASETS.md) doc.
+
+- **3 steps: Compile with `MY_VERIFICATION_DISABLE=0` flag > Dump the data > then verify the data.**
+
+- **Inside every CUDA algo, you will find a `run_verify` shell (e.g. [`cuda/backprop/run_verify`](cuda/backprop/run_verify)). This shell will be used to both generating the data and verifying the data.**
+
+- **Verification core methods & utilities are written as `C` MACRO at [`common/my_verification.h`](common/my_verification.h)**
+
+### Summary flow (If you just need command flow)
+
+```sh
+# Compile with `MY_VERIFICATION_DISABLE=0` flag
+# make CUDA COMPILER_NAME=<nvcc|polygeist> MY_VERIFICATION_DISABLE=0
+make CUDA MY_VERIFICATION_DISABLE=0
+# Or,
+make CUDA COMPILER_NAME=nvcc MY_VERIFICATION_DISABLE=0
+
+
+# Dump verification data at `benchmark-root/data/verification_data/` dir
+./scripts/dump_cuda_verification_data.sh
+
+
+# Check/verify results
+./scripts/check_cuda_correctness.sh
+```
+
+
+### Dump verification data
+
+First, you have to generate the result dataset for comparison.
+
+- **Compile with `MY_VERIFICATION_DISABLE=0`:** For that, **you need to compile CUDA codes with specific flag `MY_VERIFICATION_DISABLE=0`. Or you can statically set it in [`common/make.config`](common/make.config).** This ENV variable is checked inside [`common/my_verification.h`](common/my_verification.h) as `if (getenv("MY_VERIFICATION_DUMP")) { \`.
+
+```sh
+# Compile
+make CUDA MY_VERIFICATION_DISABLE=0
+
+# Or,
+# make CUDA COMPILER_NAME=<nvcc|polygeist> MY_VERIFICATION_DISABLE=0
+make CUDA COMPILER_NAME=nvcc MY_VERIFICATION_DISABLE=0
+```
+
+- **Run [`scripts/dump_cuda_verification_data.sh`](scripts/dump_cuda_verification_data.sh):** `./scripts/dump_cuda_verification_data.sh` will load the cuda app list from [`scripts/rodinia_cuda_apps_list.sh`](scripts/rodinia_cuda_apps_list.sh), then run each one of them using [`scripts/run_timed_common.sh`](scripts/run_timed_common.sh) to generate the datasets.
+
+```sh
+./scripts/dump_cuda_verification_data.sh
+```
+
+- **Where to find the dataset?** [`scripts/dump_cuda_verification_data.sh`](scripts/dump_cuda_verification_data.sh) will automatically create `benchmark-root/data/verification_data/` dir, and dump the data there. To be sure, after running this script, check the `benchmark-root/data/verification_data/` dir, if they are properly generated. You will find a ENV variable is exported as `export MY_VERIFICATION_DUMP=1`. The datagen dir handler is written at [`common/my_verification.h`](common/my_verification.h) check this variable like `char *verification_dir = getenv("MY_VERIFICATION_DIR"); \`. Then dump the data to that dir.
+
+
+### Verify the results
+
+- [`scripts/check_cuda_correctness.sh`](scripts/check_cuda_correctness.sh) to conduct result verification test. You will find the output in `results/cuda/log/` dir.
+
+```sh
+# Run
+./scripts/check_cuda_correctness.sh
+
+
+# In returned log file
+-------------- running bfs @ 2024-09-17T17:20:46,548274425+02:00 --------------
+Starting verification of h_cost of type int from file /abs/path/to/benchmark-root/data/verification_data//bfs/bfs.cu:264
+Verification of h_cost ended
+result: PASS
+largest absolute error: 0
+largest relative error: 0
+....
+...
+-------------- running nw @ 2024-09-17T17:21:02,535161857+02:00 --------------
+Starting verification of output_itemsets of type int from file /abs/path/to/benchmark-root/data/verification_data//nw/needle.cu:200
+Verification of output_itemsets ended
+result: PASS
+largest absolute error: 0
+largest relative error: 0
+....
+...
+```
+
 
 
 

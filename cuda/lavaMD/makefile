@@ -85,4 +85,5 @@ clean:
 		./util/num/*.o \
 		./util/timer/*.o \
 		./util/device/*.o \
-		lavaMD
+		lavaMD \
+		result.txt
