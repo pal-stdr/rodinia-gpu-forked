@@ -8,6 +8,8 @@ bm="$2"
 
 run_script="$3"
 
+RESULT_DIR="$4"
+
 TIMEOUT_CMD="timeout --kill-after=5m 5m"
 
 DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -16,7 +18,7 @@ RODINIA_ROOT_DIR="$DIR/../"
 
 RODINIA_APP_DIR="$RODINIA_ROOT_DIR/$SUBDIR/"
 
-OUTDIR="$RODINIA_ROOT_DIR/results/$SUBDIR/"
+OUTDIR="$RESULT_DIR/$SUBDIR/"
 
 DATE="$(date -Ins)"
 

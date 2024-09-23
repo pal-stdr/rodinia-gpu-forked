@@ -27,13 +27,17 @@
 
 # Pre-requisites
 
-- For this repo, `CUDA-11.4` is tested & used.
+- `CUDA-11.4` & `CUDA-12.2` is tested & used. Compiler expects that your std CUDA installation path is at `/usr/local/cuda-XX.X`. But if you have CUDA at other path, then specify with `make CUDA CUDA_INSTALL_PATH=/some/other/path/cuda-XX.X`
 
-- `CUDA-11.4` needed if you want to work with [ivanradanov's rodinia](https://github.com/ivanradanov/rodinia/tree/cgo24). Because that benchmark was done with `CUDA-11.4`.
+- **`CUDA-11.4` needed if you want to work with [ivanradanov's rodinia](https://github.com/ivanradanov/rodinia/tree/cgo24)**. Because that benchmark was done with `CUDA-11.4`.
+
+- For `nvcc` or `polygeist` or for other compiler config (e.g. [`common/nvcc.host.make.config`](common/nvcc.host.make.config)), you can use same or different CUDA version. Just you have update that config in respective `common/$(COMPILER_NAME).host.make.config` files.
 
 - For general experiments, you should be able to use `CUDA-11.X` or `CUDA-12.X`.
 
 - For CUDA specific compilation flag knowledge, jump to [Docs/CUDA/TARGETING_GPU_ARCH_with_COMPILATION_FLAGS.md](Docs/CUDA/TARGETING_GPU_ARCH_with_COMPILATION_FLAGS.md).
+
+- If you see any `Makefile` variable is defined as `MAKE_VAR ?=` (e.g. `COMPILER_NAME ?=`), means it is also capable of taking input from CLI.
 
 
 
@@ -63,6 +67,17 @@ make CUDA
 # You can also pass "COMPILER_NAME=nvcc|polygeist" flag
 # For "COMPILER_NAME=polygeist", it will load "polygeist.host.make.config"
 make CUDA COMPILER_NAME=nvcc
+
+
+# Compile with version specific "CUDA_INSTALL_PATH=" or, "CUDA_SAMPLES_PATH="
+make CUDA CUDA_INSTALL_PATH=/usr/local/cuda-12.2 CUDA_SAMPLES_PATH=$HOME/Downloads/cuda-samples
+
+
+# Compile with GPU arch targeted optimizations (defined in common/nvcc.host.make.config)
+make CUDA GPU_TARGETED_ARCH_FLAGS="-gencode arch=compute_86,code=sm_86"
+
+
+# ====== Cleaning ======
 
 
 # Clean only CUDA target
@@ -98,6 +113,9 @@ make clean
 ```sh
 # Run "scripts/run_timed_cuda.sh" from benchmark root dir
 ./scripts/run_timed_cuda.sh
+
+# if --delete-old-result-dir flag passed, delete old "results/" folder and dump new result log
+./scripts/run_timed_cuda.sh --delete-old-result-dir
 ```
 
 - (Not Important) [`scripts/parse_result.sh`](scripts/parse_result.sh), [`scripts/run_cpu.sh`](scripts/run_cpu.sh), [`scripts/run_gpu.sh`](scripts/run_gpu.sh) & [`scripts/run_wrap.sh`](scripts/run_wrap.sh) are by default inherited from core `rodinia`. They are not used.
@@ -127,13 +145,20 @@ make CUDA COMPILER_NAME=nvcc MY_VERIFICATION_DISABLE=0
 # Dump verification data at `benchmark-root/data/verification_data/` dir
 ./scripts/dump_cuda_verification_data.sh
 
+# if --delete-old-verification-data flag passed, delete old verification data folder and dump new data
+./scripts/dump_cuda_verification_data.sh --delete-old-verification-data
+
+
 
 # Check/verify results
 ./scripts/check_cuda_correctness.sh
+
+# Or, if you want to remove the old result dir
+./scripts/check_cuda_correctness.sh --delete-old-result-dir
 ```
 
 
-### Dump verification data
+### Dump verification data (Details)
 
 First, you have to generate the result dataset for comparison.
 
@@ -152,18 +177,26 @@ make CUDA COMPILER_NAME=nvcc MY_VERIFICATION_DISABLE=0
 
 ```sh
 ./scripts/dump_cuda_verification_data.sh
+
+# if --delete-old-verification-data flag passed, delete old verification data folder and dump new data
+./scripts/dump_cuda_verification_data.sh --delete-old-verification-data
 ```
 
 - **Where to find the dataset?** [`scripts/dump_cuda_verification_data.sh`](scripts/dump_cuda_verification_data.sh) will automatically create `benchmark-root/data/verification_data/` dir, and dump the data there. To be sure, after running this script, check the `benchmark-root/data/verification_data/` dir, if they are properly generated. You will find a ENV variable is exported as `export MY_VERIFICATION_DUMP=1`. The datagen dir handler is written at [`common/my_verification.h`](common/my_verification.h) check this variable like `char *verification_dir = getenv("MY_VERIFICATION_DIR"); \`. Then dump the data to that dir.
 
 
-### Verify the results
+
+### Verify the results (Details)
 
 - [`scripts/check_cuda_correctness.sh`](scripts/check_cuda_correctness.sh) to conduct result verification test. You will find the output in `results/cuda/log/` dir.
 
 ```sh
 # Run
 ./scripts/check_cuda_correctness.sh
+
+
+# Or, if you want to remove the old result dir
+./scripts/check_cuda_correctness.sh --delete-old-result-dir
 
 
 # In returned log file
@@ -190,18 +223,27 @@ largest relative error: 0
 
 # Kernels that are not used
 
-## `Kmeans`, `leukocyte`, `mummergpu`, & `hybridsort`
+## Special Note
+
+### `streamcluster`
+
+- This algo doesn't work with Compute capability `7.5` (i.e. `-gencode arch=compute_75,code=sm_75`)
+
+
+## Kernels that are not used
+
+### `Kmeans`, `leukocyte`, `mummergpu`, & `hybridsort`
 
 - Because they use texture memory which is not supported by Polygeist.
 - Texture reference support has been removed from CUDA 12.0 (Src- Polygeist paper (page 7), [CUDA 12.0 - Still support for texture reference?](https://forums.developer.nvidia.com/t/cuda-12-0-still-support-for-texture-reference-support-for-pascal-architecture-warp-synchronous-programming/237284))
 
 
-## `huffman` and `heartwall`
+### `huffman` and `heartwall`
 
 Use unsupported features within Polygeist (virtual functions). (Src- [Polygeist GPU paper](https://c.wsmoses.com/papers/polygeist24.pdf) (page 7))
 
 
-## `dwt2d`, `b+tree`, and `srad_v2`
+### `dwt2d`, `b+tree`, and `srad_v2`
 
 Produce non-deterministic results in baseline and likely are buggy benchmarks. (Src- [Polygeist GPU paper](https://c.wsmoses.com/papers/polygeist24.pdf) (page 7))
 

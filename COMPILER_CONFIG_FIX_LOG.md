@@ -66,28 +66,8 @@ CUDA: cuda_create_bin_dir
 Update the content to 
 
 ```Makefile
-CUDA_VERSION := cuda-11.4
-
-
-# Added by pal
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(dir $(mkfile_path))
-
-
-# CUDA toolkit installation path
-CUDA_DIR = /usr/local/$(CUDA_VERSION)
-
-# CUDA toolkit libraries
-CUDA_LIB_DIR := $(CUDA_DIR)/lib
-ifeq ($(shell uname -m), x86_64)
-     ifeq ($(shell if test -d $(CUDA_DIR)/lib64; then echo T; else echo F; fi), T)
-     	CUDA_LIB_DIR := $(CUDA_DIR)/lib64
-     endif
-endif
-
-# CUDA SDK installation path
-SDK_DIR = /usr/local/$(CUDA_DIR)/samples/
-
 
 # include the timing header
 FLAGS_TO_ADD = -I$(current_dir) -include my_timing.h -include my_verification.h
@@ -100,23 +80,80 @@ NVCC_FLAGS += $(FLAGS_TO_ADD)
 
 
 
+############ SETUP CUDA ENV (Start) ############
+# This common env settings will be used for all compilers
+
+
+# CUDA toolkit installation path
+# You can also pass this from CLI ("make CUDA CUDA_INSTALL_PATH=/usr/local/cuda-11.4")
+CUDA_INSTALL_PATH ?= /usr/local/cuda-11.4
+
+
+# CUDA SDK/smaples installation path
+# You can also pass this from CLI ("make CUDA CUDA_SAMPLES_PATH=/usr/local/cuda-11.4/samples")
+# Used in "cuda/cfd/Makefile". There from "CUDA_SAMPLES_PATH"
+CUDA_SAMPLES_PATH ?= $(CUDA_INSTALL_PATH)/samples/
+
+
+# Used in lot of places. But most of them are commented out.
+CUDA_DIR = $(CUDA_INSTALL_PATH)
+
+
+# CUDA toolkit libraries
+CUDA_LIB_DIR := $(CUDA_DIR)/lib
+ifeq ($(shell uname -m), x86_64)
+     ifeq ($(shell if test -d $(CUDA_DIR)/lib64; then echo T; else echo F; fi), T)
+     	CUDA_LIB_DIR := $(CUDA_DIR)/lib64
+     endif
+endif
+
+
+
+# Used in "cuda/leukocyte/CUDA/Makefile", "cuda/cfd/Makefile" (But commented out)
+SDK_DIR = $(CUDA_SAMPLES_PATH)
+
+
+CUDA_SDK_COMMON_INCLUDE_PATH := $(CUDA_SAMPLES_PATH)/common/inc
+CUDA_SDK_COMMON_LIB_PATH := $(CUDA_SAMPLES_PATH)/lib
+
+
+# Important
+# For "cuda-11.4", sample's default location is "/usr/local/cuda-11.4/samples". So the common headers for samples are located in "/usr/local/cuda-11.4/samples/common/inc".
+# But for git cloned sample versions (e.g. "/path/to/cuda-samples/"), common headers are located in "/path/to/cuda-samples/Common"
+# Samples common/ is used in used only in "cuda/cfd/Makefile".
+# Set the SAMPLES common -I path
+# Check if /path/to/common/inc exists (because, for git cloned sample repos, the dir is different)
+# Check if $(CUDA_SDK_COMMON_INCLUDE_PATH) exists
+ifeq ($(shell [ -d $(CUDA_SDK_COMMON_INCLUDE_PATH) ] && echo exists),)
+    # If it doesn't exist, set the paths to the alternative
+    CUDA_SDK_COMMON_INCLUDE_PATH = $(CUDA_SAMPLES_PATH)/Common
+    CUDA_SDK_COMMON_LIB_PATH = $(CUDA_SAMPLES_PATH)/Common/lib
+endif
+
+############ SETUP CUDA ENV (End) ############
+
+
 # ======== Conditionally load "nvcc.host.make.config" or "polygeist.host.make.config" =========
 
 # Conditionally set COMPILER_NAME to nvcc if not defined by the user
 # If You didn't specify "COMPILER_NAME=" by "make YOUR_TARGET COMPILER_NAME=" command, then by default, COMPILER_NAME= set to "nvcc"
 COMPILER_NAME ?= nvcc
 
-include $(current_dir)/$(COMPILER_NAME).host.make.config
+
+# If you pass the COMPILER_NAME as "nvcc.something.something.host.make.config", then only the first word chunk berfor "." will be taken from that  (i.e. "nvcc")
+# Extract the first chunk
+FIRST_WORD_CHUNK_AS_CORE_COMPILER_NAME := $(firstword $(subst ., ,$(COMPILER_NAME)))
+
+
+include $(current_dir)/$(FIRST_WORD_CHUNK_AS_CORE_COMPILER_NAME).host.make.config
 
 # ============================================================================================
-
-
 
 
 # define the compiler name
 # Important for generating results "results/cuda/out/timestamp.log"
 ifdef COMPILER_NAME
-	FLAGS_TO_ADD += -D_MY_COMPILER_NAME_=\"$(COMPILER_NAME)\"
+    FLAGS_TO_ADD += -D_MY_COMPILER_NAME_=\"$(COMPILER_NAME)\"
 endif
 
 
@@ -130,26 +167,32 @@ endif
 ### 1.2.2. Add & define [common/nvcc.host.make.config](common/nvcc.host.make.config)
 
 ```Makefile
-CC = /usr/local/$(CUDA_VERSION)/bin/nvcc
-CXX = /usr/local/$(CUDA_VERSION)/bin/nvcc
-NVCC = /usr/local/$(CUDA_VERSION)/bin/nvcc
-LINKER = /usr/local/$(CUDA_VERSION)/bin/nvcc
+CC = $(CUDA_INSTALL_PATH)/bin/nvcc
+CXX = $(CUDA_INSTALL_PATH)/bin/nvcc
+NVCC = $(CUDA_INSTALL_PATH)/bin/nvcc
+LINKER = $(CUDA_INSTALL_PATH)/bin/nvcc
+
 
 # Set GPU arch targeted optimizations. If you don't want, set it empty
-GPU_TARGETED_ARCH_FLAGS := -gencode arch=compute_86,code=sm_86
+# You can also pass this from CLI (" make CUDA GPU_TARGETED_ARCH_FLAGS="-gencode arch=compute_86,code=sm_86" ")
+GPU_TARGETED_ARCH_FLAGS ?= -gencode arch=compute_86,code=sm_86
+
+# Set CUDA object compiler flags (i.e. optimizations)
+NVCC_FLAGS += $(GPU_TARGETED_ARCH_FLAGS)
+
 
 CC_FLAGS += -O3 -lgomp
 CXX_FLAGS += -O3 -lgomp
 
-# Set CUDA object compiler flags (i.e. optimizations)
-NVCC_FLAGS += $(GPU_TARGETED_ARCH_FLAGS)
+
+# # Set CUDA object compiler flags (i.e. optimizations)
+# NVCC_FLAGS += $(GPU_TARGETED_ARCH_FLAGS)
 NVCC_FLAGS += -O3 -lgomp
+
 
 # Set CUDA object linker flags (i.e. libs, optimizations, etc.)
 LINKER_FLAGS += -lcudart -lcuda -lm
 LINKER_FLAGS += -O3 -lgomp
-
-CUDA_SAMPLES_PATH_ = /usr/local/$(CUDA_VERSION)/samples/
 ```
 
 
@@ -212,29 +255,46 @@ clean: $(SRC)
 ```Makefile
 include ../../common/make.config
 
+# CUDA_SDK_PATH := $(SDK_DIR)
+
+# # Determine the correct version of the cutil library
+# CUTIL_LIB = # -lcutil
+# ifeq ($(shell uname -m), x86_64)
+#      ifeq ($(shell if test -e $(SDK_DIR)/lib/libcutil_x86_64.a; then echo T; else echo F; fi), T)
+#         CUTIL_LIB = #-lcutil_x86_64
+#      endif
+# endif
+
+
 CUTIL_LIB = $(NVCC_FLAGS)
-CUDA_SDK_PATH = $(CUDA_SAMPLES_PATH_)
+CUDA_SDK_PATH = $(CUDA_SAMPLES_PATH)
 
 
 all: euler3d # euler3d_double pre_euler3d pre_euler3d_double 
 
-euler3d: euler3d.cu
-	$(LINKER) $(KERNEL_DIM) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib $(CUTIL_LIB) euler3d.cu -o euler3d
+euler3d: euler3d.o
+	$(LINKER) $(NVCC_FLAGS) $(LINKER_FLAGS) -L$(CUDA_SDK_COMMON_LIB_PATH) -L$(CUDA_LIB_DIR) euler3d.o -o euler3d
+
+euler3d.o: euler3d.cu
+	$(NVCC) $(KERNEL_DIM) $(NVCC_FLAGS) -I ../hybridsort -I$(CUDA_SDK_COMMON_INCLUDE_PATH) -c euler3d.cu -o euler3d.o
+
+# euler3d: euler3d.cu
+# 	$(LINKER) $(KERNEL_DIM) -I$(CUDA_SDK_COMMON_INCLUDE_PATH) $(NVCC_FLAGS) -L$(CUDA_SDK_COMMON_LIB_PATH) -L$(CUDA_LIB_DIR) $(CUTIL_LIB) euler3d.cu -o euler3d
 
 # euler3d_double: euler3d_double.cu
-# 	$(NVCC) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib $(CUTIL_LIB) euler3d_double.cu -o euler3d_double
+# 	$(NVCC) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib -L$(CUDA_LIB_DIR) $(CUTIL_LIB) euler3d_double.cu -o euler3d_double
 
 
 # pre_euler3d: pre_euler3d.cu
-# 	$(NVCC) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib $(CUTIL_LIB) pre_euler3d.cu -o pre_euler3d
+# 	$(NVCC) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib -L$(CUDA_LIB_DIR) $(CUTIL_LIB) pre_euler3d.cu -o pre_euler3d
 
 
 # pre_euler3d_double: pre_euler3d_double.cu
-# 	$(NVCC) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib $(CUTIL_LIB) pre_euler3d_double.cu -o pre_euler3d_double
+# 	$(NVCC) -I$(CUDA_SDK_PATH)/common/inc -L$(CUDA_SDK_PATH)/lib -L$(CUDA_LIB_DIR) $(CUTIL_LIB) pre_euler3d_double.cu -o pre_euler3d_double
 
 
 clean:
-	rm -f euler3d euler3d_double pre_euler3d pre_euler3d_double *.linkinfo
+	rm -f euler3d euler3d_double pre_euler3d pre_euler3d_double *.o *.linkinfo
 ```
 
 - And have to update [Makefile](Makefile) according to that.
