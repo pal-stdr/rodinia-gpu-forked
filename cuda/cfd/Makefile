@@ -20,7 +20,7 @@ CUDA_SDK_PATH = $(CUDA_SAMPLES_PATH)
 all: euler3d # euler3d_double pre_euler3d pre_euler3d_double 
 
 euler3d: euler3d.o
-	$(LINKER) $(NVCC_FLAGS) $(LINKER_FLAGS) -L$(CUDA_SDK_COMMON_LIB_PATH) -L$(CUDA_LIB_DIR) euler3d.o -o euler3d
+	$(LINKER) $(LINKER_FLAGS) -L$(CUDA_SDK_COMMON_LIB_PATH) -L$(CUDA_LIB_DIR) euler3d.o -o euler3d
 
 euler3d.o: euler3d.cu
 	$(NVCC) $(KERNEL_DIM) $(NVCC_FLAGS) -I ../hybridsort -I$(CUDA_SDK_COMMON_INCLUDE_PATH) -c euler3d.cu -o euler3d.o

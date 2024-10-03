@@ -7,7 +7,7 @@ SRC = gaussian.cu
 EXE = gaussian
 
 $(EXE): gaussian.o
-	$(LINKER) $(NVCC_FLAGS) $(LINKER_FLAGS) gaussian.o -o $(EXE)
+	$(LINKER) $(LINKER_FLAGS) gaussian.o -o $(EXE)
 
 gaussian.o: $(SRC)
 	$(NVCC) $(KERNEL_DIM) $(NVCC_FLAGS) -c $(SRC) -o gaussian.o

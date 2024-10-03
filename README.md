@@ -17,21 +17,22 @@
 
 
 
-# Rodinia Compiler config Fix/Update logs
-
-- Most of the changes has been done w.r.t `ivanradanov` [rodinia's](https://github.com/ivanradanov/rodinia/tree/cgo24) `cgo24` branch. Some are based on our config.
-
-- Check [COMPILER_CONFIG_FIX_LOG.md](COMPILER_CONFIG_FIX_LOG.md) for details.
-
-
-
 # Pre-requisites
 
-- `CUDA-11.4` & `CUDA-12.2` is tested & used. Compiler expects that your std CUDA installation path is at `/usr/local/cuda-XX.X`. But if you have CUDA at other path, then specify with `make CUDA CUDA_INSTALL_PATH=/some/other/path/cuda-XX.X`
+
+
+
+
+# How to use `nvcc` (i.e. just [cuda/](cuda/)) compilation flow?
+
+
+## Pre-requisites for [cuda/](cuda/) Benchmark
+
+- `CUDA-11.4` & `CUDA-12.2` is tested & used just for [cuda/](cuda/) benchmarks. Compiler expects that your std CUDA installation path is at `/usr/local/cuda-XX.X`. But if you have CUDA at other path, then specify with `make CUDA CUDA_INSTALL_PATH=/some/other/path/cuda-XX.X`
 
 - **`CUDA-11.4` needed if you want to work with [ivanradanov's rodinia](https://github.com/ivanradanov/rodinia/tree/cgo24)**. Because that benchmark was done with `CUDA-11.4`.
 
-- For `nvcc` or `polygeist` or for other compiler config (e.g. [`common/nvcc.host.make.config`](common/nvcc.host.make.config)), you can use same or different CUDA version. Just you have update that config in respective `common/$(COMPILER_NAME).host.make.config` files.
+- For `COMPILER_NAME=nvcc` compiler config (i.e. [`common/nvcc.host.make.config`](common/nvcc.host.make.config)), you can use same or different CUDA version. Just you have update that config in respective `common/$(COMPILER_NAME).host.make.config` files.
 
 - For general experiments, you should be able to use `CUDA-11.X` or `CUDA-12.X`.
 
@@ -41,7 +42,12 @@
 
 
 
-# How to use `nvcc` (i.e. just CUDA) compilation flow?
+## Rodinia CUDA Compiler config Fix/Update logs
+
+- Most of the changes has been done w.r.t `ivanradanov` [rodinia's](https://github.com/ivanradanov/rodinia/tree/cgo24) `cgo24` branch. Some are based on our config.
+
+- Check [Docs/CUDA/CUDA_COMPILER_CONFIG_FIX_LOG.md](Docs/CUDA/CUDA_COMPILER_CONFIG_FIX_LOG.md) for details.
+
 
 ## Summary Flow
 
@@ -77,6 +83,12 @@ make CUDA CUDA_INSTALL_PATH=/usr/local/cuda-12.2 CUDA_SAMPLES_PATH=$HOME/Downloa
 make CUDA GPU_TARGETED_ARCH_FLAGS="-gencode arch=compute_86,code=sm_86"
 
 
+# DONOT USE "TYPE=CUDA" to compile for "nvcc".
+# And also the "TYPE=" variable will be reserved for other compilers (i.e. polygeist)
+# It will show unexpected behavior
+make TYPE=CUDA COMPILER_NAME=nvcc
+
+
 # ====== Cleaning ======
 
 
@@ -95,7 +107,7 @@ make clean
 
 - **`backprop`, `lavaMD`, `nw`, `streamcluster`, `particlefinder` and `pathfinder` needs no external data.**
 
-- **Jump to [PREPARE_CUDA_INPUT_DATASETS.md](PREPARE_CUDA_INPUT_DATASETS.md) doc for the details of preparing datasets.**
+- **Jump to [Docs/CUDA/PREPARE_CUDA_INPUT_DATASETS.md](Docs/CUDA/PREPARE_CUDA_INPUT_DATASETS.md) doc for the details of preparing datasets.**
 
 
 
@@ -124,7 +136,7 @@ make clean
 
 ## How to verify that results are correct? (verification)
 
-- **(Important) Prerequisites:** You need to collect + prepare the datasets. Go through [PREPARE_CUDA_INPUT_DATASETS.md](PREPARE_CUDA_INPUT_DATASETS.md) doc.
+- **(Important) Prerequisites:** You need to collect + prepare the datasets. Go through [Docs/CUDA/PREPARE_CUDA_INPUT_DATASETS.md](Docs/CUDA/PREPARE_CUDA_INPUT_DATASETS.md) doc.
 
 - **3 steps: Compile with `MY_VERIFICATION_DISABLE=0` flag > Dump the data > then verify the data.**
 
@@ -221,16 +233,10 @@ largest relative error: 0
 
 
 
-# Kernels that are not used
-
-## Special Note
-
-### `streamcluster`
-
-- This algo doesn't work with Compute capability `7.5` (i.e. `-gencode arch=compute_75,code=sm_75`)
 
 
 ## Kernels that are not used
+
 
 ### `Kmeans`, `leukocyte`, `mummergpu`, & `hybridsort`
 
@@ -248,3 +254,8 @@ Use unsupported features within Polygeist (virtual functions). (Src- [Polygeist 
 Produce non-deterministic results in baseline and likely are buggy benchmarks. (Src- [Polygeist GPU paper](https://c.wsmoses.com/papers/polygeist24.pdf) (page 7))
 
 
+## Special Note
+
+### `streamcluster`
+
+- Once found some weird behavior for Compute capability `7.5` (i.e. `-gencode arch=compute_75,code=sm_75`). But now it is working. But need to be careful.

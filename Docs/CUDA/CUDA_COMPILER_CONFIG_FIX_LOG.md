@@ -1,4 +1,4 @@
-# 1. Mother compiler config issue
+# 1. Mother compiler config issue (For [cuda/](cuda/))
 
 ## 1.1. `make clean` recursively delete core `Makefile`, `LICENSE` & `README`
 
@@ -133,21 +133,14 @@ endif
 ############ SETUP CUDA ENV (End) ############
 
 
-# ======== Conditionally load "nvcc.host.make.config" or "polygeist.host.make.config" =========
+
 
 # Conditionally set COMPILER_NAME to nvcc if not defined by the user
 # If You didn't specify "COMPILER_NAME=" by "make YOUR_TARGET COMPILER_NAME=" command, then by default, COMPILER_NAME= set to "nvcc"
 COMPILER_NAME ?= nvcc
 
 
-# If you pass the COMPILER_NAME as "nvcc.something.something.host.make.config", then only the first word chunk berfor "." will be taken from that  (i.e. "nvcc")
-# Extract the first chunk
-FIRST_WORD_CHUNK_AS_CORE_COMPILER_NAME := $(firstword $(subst ., ,$(COMPILER_NAME)))
 
-
-include $(current_dir)/$(FIRST_WORD_CHUNK_AS_CORE_COMPILER_NAME).host.make.config
-
-# ============================================================================================
 
 
 # define the compiler name
@@ -161,6 +154,22 @@ MY_VERIFICATION_DISABLE = 1
 ifneq ($(MY_VERIFICATION_DISABLE),0)
     FLAGS_TO_ADD += -DMY_VERIFICATION_DISABLE
 endif
+
+
+
+# ======== Conditionally load "nvcc.host.make.config" or "polygeist.host.make.config" =========
+
+# If you pass the COMPILER_NAME as "nvcc.something.something.host.make.config", then only the first word chunk berfor "." will be taken from that  (i.e. "nvcc")
+# Extract the first chunk
+FIRST_WORD_CHUNK_AS_CORE_COMPILER_NAME := $(firstword $(subst ., ,$(COMPILER_NAME)))
+
+
+$(info FIRST_WORD_CHUNK_AS_CORE_COMPILER_NAME = $(FIRST_WORD_CHUNK_AS_CORE_COMPILER_NAME))
+
+
+include $(current_dir)/$(FIRST_WORD_CHUNK_AS_CORE_COMPILER_NAME).host.make.config
+
+# ============================================================================================
 ```
 
 
@@ -207,7 +216,7 @@ Keep in mind, for `$(NVCC_FLAGS)` (i.e. `GPU_TARGETED_ARCH_FLAGS := -gencode arc
 include ../../common/make.config
 
 backprop: backprop.o facetrain.o imagenet.o backprop_cuda.o 
-	$(LINKER) $(LINKER_FLAGS) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) backprop.o facetrain.o imagenet.o backprop_cuda.o -o backprop
+	$(LINKER) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) backprop.o facetrain.o imagenet.o backprop_cuda.o -o backprop
 
 %.o: %.[ch]
 	$(CC) $(CC_FLAGS) $< -c -o $@
@@ -237,7 +246,7 @@ EXE = bfs.out
 
 
 $(EXE): $(OBJ)
-	$(LINKER) $(NVCC_FLAGS) $(OBJ) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
+	$(LINKER) $(OBJ) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ -I../util
@@ -273,7 +282,7 @@ CUDA_SDK_PATH = $(CUDA_SAMPLES_PATH)
 all: euler3d # euler3d_double pre_euler3d pre_euler3d_double 
 
 euler3d: euler3d.o
-	$(LINKER) $(NVCC_FLAGS) $(LINKER_FLAGS) -L$(CUDA_SDK_COMMON_LIB_PATH) -L$(CUDA_LIB_DIR) euler3d.o -o euler3d
+	$(LINKER) $(LINKER_FLAGS) -L$(CUDA_SDK_COMMON_LIB_PATH) -L$(CUDA_LIB_DIR) euler3d.o -o euler3d
 
 euler3d.o: euler3d.cu
 	$(NVCC) $(KERNEL_DIM) $(NVCC_FLAGS) -I ../hybridsort -I$(CUDA_SDK_COMMON_INCLUDE_PATH) -c euler3d.cu -o euler3d.o
@@ -317,7 +326,7 @@ SRC = gaussian.cu
 EXE = gaussian
 
 $(EXE): gaussian.o
-	$(LINKER) $(NVCC_FLAGS) $(LINKER_FLAGS) gaussian.o -o $(EXE)
+	$(LINKER) $(LINKER_FLAGS) gaussian.o -o $(EXE)
 
 gaussian.o: $(SRC)
 	$(NVCC) $(KERNEL_DIM) $(NVCC_FLAGS) -c $(SRC) -o gaussian.o
@@ -344,7 +353,7 @@ OBJ = hotspot.o
 EXE = hotspot
 
 $(EXE): $(OBJ)
-	$(LINKER) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) $(OBJ) -o $(EXE)
+	$(LINKER) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) $(OBJ) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ -I../util
@@ -393,7 +402,7 @@ OUTPUT = *.out
 # FLAGS = -g -G #-arch sm_20 --ptxas-options=-v
 
 $(EXE): $(OBJ)
-	$(LINKER) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) $(OBJ) -o $(EXE)
+	$(LINKER) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) $(OBJ) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ -I../util
@@ -462,7 +471,7 @@ lavaMD:		main.o \
 			./util/num/num.o \
 			./util/timer/timer.o \
 			./util/device/device.o
-	$(LINKER) $(KERNEL_DIM) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) main.o \
+	$(LINKER) $(KERNEL_DIM) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) main.o \
 			./util/num/num.o \
 			./util/timer/timer.o \
 			./util/device/device.o \
@@ -572,7 +581,7 @@ all : $(EXECUTABLE)
 # 		-L/usr/local/cuda/lib64 -lcudart_static -ldl -lrt -pthread -DTIMING
 
 $(EXECUTABLE) : $(OBJS)
-	$(LINKER) $(NVCC_FLAGS)  $? -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $@
+	$(LINKER) $? -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $@
 
 clean:
 	rm -f $(EXECUTABLE) $(OBJS) *.linkinfo
@@ -611,7 +620,7 @@ all : nn
 
 
 $(EXE): $(OBJ)
-	$(LINKER) $(OBJ) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
+	$(LINKER) $(OBJ) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@
@@ -649,7 +658,7 @@ EXE = needle
 # 	$(CC) ${KERNEL_DIM} $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR)
 
 $(EXE): $(OBJ)
-	$(LINKER) $(OBJ) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
+	$(LINKER) $(OBJ) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -I../util -c $< -o $@
@@ -724,7 +733,7 @@ OBJ = main.o
 EXE = srad
 
 $(EXE): $(OBJ)
-	$(LINKER) $(OBJ) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
+	$(LINKER) $(OBJ) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -I../util -c $< -o $@
@@ -801,7 +810,7 @@ OUTPUT =
 	$(CXX) $(OUTPUT) $(CXX_FLAGS) -c $< -o $@
 
 $(EXECUTABLE): $(COBJS) $(CXXOBJS) $(CUOBJS)
-	$(LINKER) $(NVCC_FLAGS) $(COBJS) $(CXXOBJS) $(CUOBJS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXECUTABLE)
+	$(LINKER) $(COBJS) $(CXXOBJS) $(CUOBJS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXECUTABLE)
 
 clean:
 	rm -f $(COBJS) $(CXXOBJS) $(CUOBJS) $(EXECUTABLE)
@@ -846,13 +855,13 @@ all: $(EXE) $(EXE2)
 
 
 $(EXE): $(OBJ)
-	$(LINKER) $(NVCC_FLAGS) $(OBJ) $(LINKER_FLAGS) -o $(EXE)
+	$(LINKER) $(OBJ) $(LINKER_FLAGS) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@
 
 $(EXE2): $(OBJ2)
-	$(LINKER) $(NVCC_FLAGS) $(OBJ2) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE2)
+	$(LINKER) $(OBJ2) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE2)
 
 $(OBJ2): $(SRC2)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@
@@ -879,7 +888,7 @@ EXE = pathfinder
 
 
 $(EXE): $(OBJ)
-	$(LINKER) $(OBJ) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
+	$(LINKER) $(OBJ) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -I../util -c $< -o $@

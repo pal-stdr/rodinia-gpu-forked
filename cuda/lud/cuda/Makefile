@@ -40,7 +40,7 @@ all : $(EXECUTABLE)
 # 		-L/usr/local/cuda/lib64 -lcudart_static -ldl -lrt -pthread -DTIMING
 
 $(EXECUTABLE) : $(OBJS)
-	$(LINKER) $(NVCC_FLAGS)  $? -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $@
+	$(LINKER) $? -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $@
 
 clean:
 	rm -f $(EXECUTABLE) $(OBJS) *.linkinfo

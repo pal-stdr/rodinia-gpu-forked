@@ -32,13 +32,13 @@ all: $(EXE) $(EXE2)
 
 
 $(EXE): $(OBJ)
-	$(LINKER) $(NVCC_FLAGS) $(OBJ) $(LINKER_FLAGS) -o $(EXE)
+	$(LINKER) $(OBJ) $(LINKER_FLAGS) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@
 
 $(EXE2): $(OBJ2)
-	$(LINKER) $(NVCC_FLAGS) $(OBJ2) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE2)
+	$(LINKER) $(OBJ2) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE2)
 
 $(OBJ2): $(SRC2)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@

@@ -8,7 +8,7 @@ OBJ = hotspot.o
 EXE = hotspot
 
 $(EXE): $(OBJ)
-	$(LINKER) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) $(OBJ) -o $(EXE)
+	$(LINKER) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) $(OBJ) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ -I../util

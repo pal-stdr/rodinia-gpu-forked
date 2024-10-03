@@ -28,7 +28,7 @@ lavaMD:		main.o \
 			./util/num/num.o \
 			./util/timer/timer.o \
 			./util/device/device.o
-	$(LINKER) $(KERNEL_DIM) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) main.o \
+	$(LINKER) $(KERNEL_DIM) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) main.o \
 			./util/num/num.o \
 			./util/timer/timer.o \
 			./util/device/device.o \

@@ -14,7 +14,7 @@ EXE = needle
 # 	$(CC) ${KERNEL_DIM} $(SRC) -o $(EXE) -I$(INCLUDE) -L$(CUDA_LIB_DIR)
 
 $(EXE): $(OBJ)
-	$(LINKER) $(OBJ) $(NVCC_FLAGS) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
+	$(LINKER) $(OBJ) -L$(CUDA_LIB_DIR) $(LINKER_FLAGS) -o $(EXE)
 
 $(OBJ): $(SRC)
 	$(NVCC) $(NVCC_FLAGS) -I../util -c $< -o $@
